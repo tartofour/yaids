@@ -5,6 +5,8 @@
 
 /* Ethernet addresses are 6 bytes */
 #define SIZE_ETHERNET 14
+#define SIZE_UDP 8
+
 #define ETHER_ADDR_LEN_STR 18
 #define IP_ADDR_LEN_STR 16
 
@@ -13,6 +15,7 @@
 #define IPV6 34525
 #define UDP_PROTOCOL 17
 #define TCP_PROTOCOL 6
+#define ICMP_PROTOCOL 1
 
 #define ERROR -1
 
@@ -41,6 +44,14 @@ struct sniff_ip
         u_short ip_sum;         /* checksum */
         struct in_addr ip_src,ip_dst; /* source and dest address */
 };
+
+struct sniff_udp {
+        u_short uh_sport;               /* source port */
+        u_short uh_dport;               /* destination port */
+        u_short uh_ulen;                /* udp length */
+        u_short uh_sum;                 /* udp checksum */
+};
+
 
 #define IP_HL(ip)               (((ip)->ip_vhl) & 0x0f)
 #define IP_V(ip)                (((ip)->ip_vhl) >> 4)
@@ -95,6 +106,7 @@ struct custom_ip
 {
         char source_ip[IP_ADDR_LEN_STR];
         char destination_ip[IP_ADDR_LEN_STR];
+        int protocole; // rajouté
         TCP_Segment data;
 
 } typedef IP_Packet;

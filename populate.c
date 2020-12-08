@@ -14,29 +14,33 @@ void generate_ip(unsigned int ip, char ip_addr[])
 
 void print_payload(int payload_length, unsigned char *payload)
 {
-        if (payload_length > 0) 
+	if (payload_length > 0) 
+    {
+        const u_char *temp_pointer = payload;
+        int byte_count = 0;
+        while (byte_count++ < payload_length) 
         {
-                const u_char *temp_pointer = payload;
-                int byte_count = 0;
-                while (byte_count++ < payload_length) 
-                {
-                        printf("%c", (char)*temp_pointer);
-                        temp_pointer++;
-                }
-                printf("\n");
+            printf("%c", (char)*temp_pointer);
+            temp_pointer++;
         }
+        printf("\n");
+    }
 }
 
 
 int populate_packet_ds(const struct pcap_pkthdr *header, const u_char *packet, ETHER_Frame *custom_frame)
 {
+			
         const struct sniff_ethernet *ethernet; /* The ethernet header */
         const struct sniff_ip *ip; /* The IP header */
         const struct sniff_tcp *tcp; /* The TCP header */
+        const struct sniff_udp *udp; /*The UDP header */
         unsigned char *payload; /* Packet payload */
 
         u_int size_ip;
         u_int size_tcp;
+        u_int size_udp;
+        u_int size_payload;
 
         ethernet = (struct sniff_ethernet*)(packet);
         //ETHER_Frame custom_frame;
@@ -54,13 +58,15 @@ int populate_packet_ds(const struct pcap_pkthdr *header, const u_char *packet, E
         strcpy(custom_frame->source_mac,src_mac_address);
         strcpy(custom_frame->destination_mac, dst_mac_address);
 
+		// ARP
         if(ntohs(ethernet->ether_type) == ETHERTYPE_ARP) 
         {
 
                 custom_frame->ethernet_type = ARP;
                 printf("\nARP packet: %d\n",custom_frame->ethernet_type);
         }
-
+		
+		//IP
         if(ntohs(ethernet->ether_type) == ETHERTYPE_IP) 
         {
                 custom_frame->ethernet_type = IPV4;
@@ -70,11 +76,16 @@ int populate_packet_ds(const struct pcap_pkthdr *header, const u_char *packet, E
                 IP_Packet custom_packet;
                 char src_ip[IP_ADDR_LEN_STR];
                 char dst_ip[IP_ADDR_LEN_STR];
+                int protocole;
                 generate_ip(ip->ip_src.s_addr,src_ip);
                 generate_ip(ip->ip_dst.s_addr,dst_ip);
 
                 strcpy(custom_packet.source_ip,src_ip);
                 strcpy(custom_packet.destination_ip, dst_ip);
+                custom_packet.protocole = ip->ip_p; 
+               // printf("Trigger : %d\n", custom_packet.protocole);
+                 
+            
 
                 size_ip = IP_HL(ip)*4;
 
@@ -83,9 +94,24 @@ int populate_packet_ds(const struct pcap_pkthdr *header, const u_char *packet, E
                         return ERROR;
                 }
 
+                if((int)ip->ip_p==ICMP_PROTOCOL)
+                {
+                        printf("\nICMP Handling\n");
+                        // ICI pour l'ICMP
+                        
+                }
                 if((int)ip->ip_p==UDP_PROTOCOL)
                 {
-                        printf("\nUDP Handling\n");
+					printf("\nUDP Handling\n");
+					udp = (struct sniff_udp*)(packet + SIZE_ETHERNET + size_ip);					
+					// vérif que size_udp fasse une certaine longuer ?
+					
+					payload = (u_char *)(packet + SIZE_ETHERNET + size_ip + SIZE_UDP);
+
+					size_payload = ntohs(ip->ip_len) - (size_ip + SIZE_UDP);
+
+                        
+                        
                 }
                 if((int)ip->ip_p==TCP_PROTOCOL)
                 {
