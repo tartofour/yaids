@@ -52,7 +52,6 @@ struct sniff_udp {
         u_short uh_sum;                 /* udp checksum */
 };
 
-
 #define IP_HL(ip)               (((ip)->ip_vhl) & 0x0f)
 #define IP_V(ip)                (((ip)->ip_vhl) >> 4)
 
@@ -110,7 +109,6 @@ struct custom_ip
         TCP_Segment data;
 
 } typedef IP_Packet;
-
 
 struct custom_ethernet
 {
