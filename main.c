@@ -306,6 +306,19 @@ Rule* rules_malloc(int count)
 {
     Rule* ptr = (Rule *) malloc(sizeof(Rule) * count);
     
+    for(i=0; i<count; i++)
+    {
+		memset(ptr->action, 0, ACTION_LEN_STR);
+		memset(ptr->protocole, 0, PROTOCOLE_LEN_STR);
+		memset(ptr->ip_src, 0, IP_ADDR_LEN_STR);
+		memset(ptr->direction, 0, DIRECTION_LEN_STR);
+		memset(ptr->ip_dst, 0, IP_ADDR_LEN_STR);
+		memset(ptr->content, 0, STR_MAX_SIZE);
+		memset(ptr->msg, 0, STR_MAX_SIZE);
+		ptr->port_src = -1;
+		ptr->port_dst = -1;
+	}
+	
     return ptr;
 }
 
@@ -344,7 +357,6 @@ int populate_rule_header(char *line, char *delim, Rule *rule_ds)
                 
             case 2: // IP Source
             
-                memset(ip_src, 0, IP_ADDR_LEN_STR);
 				strcpy(ip_src, str_token);
             
 				if (!is_ip_in_rules_valid(ip_src))
@@ -374,7 +386,6 @@ int populate_rule_header(char *line, char *delim, Rule *rule_ds)
 
             case 5: // IP Destination
             
-            	memset(ip_dst, 0, IP_ADDR_LEN_STR);
             	strcpy(ip_dst, str_token);
                 
 				if (!is_ip_in_rules_valid(ip_dst))
@@ -410,9 +421,7 @@ int populate_rule_option(char *line, char *delim, Rule *rule_ds)
     char *str_token;
     char *saveptr;
     int i;
-
-    rule_ds->msg[0] = '\0';	
-	rule_ds->content[0] = '\0';
+	
 	str_token = strtok_r(line, delim, &saveptr);
 		 
     for (i=0; str_token != NULL; i++)
@@ -532,9 +541,8 @@ int rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 		printf("msg est vide\n");
     printf("---\n");
  
-    //est-ce que le protocole du packet correspond au protocole de la ligne
-   /* 
-    
+  // est ce que le protocole du packet est ICMP, UPD, TCP
+  /*  
     if (strcmp(rules_ds->protocole, "udp") == 0
     {
 		
@@ -549,9 +557,9 @@ int rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
     {
 		
 	} 
-	
-	
 	*/
+	
+	
 	
 	
 	
@@ -653,7 +661,6 @@ int main(int argc, char *argv[])
     
     fclose(rules_file);
     //print_rules(rules, rules_file_lines_count);
-	
 	
 	handle = pcap_create(device, error_buffer);
     pcap_set_timeout(handle,10);
