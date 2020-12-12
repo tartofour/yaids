@@ -22,38 +22,66 @@
 /* Ethernet header */
 struct sniff_ethernet 
 {
-        u_char ether_dhost[ETHER_ADDR_LEN]; /* Destination host address */
-        u_char ether_shost[ETHER_ADDR_LEN]; /* Source host address */
-        u_short ether_type; /* IP? ARP? RARP? etc */
+	u_char ether_dhost[ETHER_ADDR_LEN]; /* Destination host address */
+	u_char ether_shost[ETHER_ADDR_LEN]; /* Source host address */
+	u_short ether_type; /* IP? ARP? RARP? etc */
+};
+
+
+/* ARP packet */
+struct sniff_arp {
+	u_short arp_htype;
+	u_short arp_ptype;
+	u_char arp_hlen;
+	u_char arp_plen;
+	u_short arp_operation;
+	u_char arp_src[ETHER_ADDR_LEN];
+	u_char arp_src_proto_addr[4];
+	u_char arp_dst[ETHER_ADDR_LEN];
+	u_char arp_dst_proto_addr[4];
 };
 
 /* IP header */
 struct sniff_ip
 {
-        u_char ip_vhl;          /* version << 4 | header length >> 2 */
-        u_char ip_tos;          /* type of service */
-        u_short ip_len;         /* total length */
-        u_short ip_id;          /* identification */
-        u_short ip_off;         /* fragment offset field */
-        #define IP_RF 0x8000            /* reserved fragment flag */
-        #define IP_DF 0x4000            /* don't fragment flag */
-        #define IP_MF 0x2000            /* more fragments flag */
-        #define IP_OFFMASK 0x1fff       /* mask for fragmenting bits */
-        u_char ip_ttl;          /* time to live */
-        u_char ip_p;            /* protocol */
-        u_short ip_sum;         /* checksum */
-        struct in_addr ip_src,ip_dst; /* source and dest address */
+	u_char ip_vhl;          /* version << 4 | header length >> 2 */
+	u_char ip_tos;          /* type of service */
+	u_short ip_len;         /* total length */
+	u_short ip_id;          /* identification */
+	u_short ip_off;         /* fragment offset field */
+	#define IP_RF 0x8000            /* reserved fragment flag */
+	#define IP_DF 0x4000            /* don't fragment flag */
+	#define IP_MF 0x2000            /* more fragments flag */
+	#define IP_OFFMASK 0x1fff       /* mask for fragmenting bits */
+	u_char ip_ttl;          /* time to live */
+	u_char ip_p;            /* protocol */
+	u_short ip_sum;         /* checksum */
+	struct in_addr ip_src,ip_dst; /* source and dest address */
 };
 
+
+/* ICMP header */
+struct sniff_icmp 
+{
+    u_char icmp_type;
+	#define ICMP_ECHO 0x8
+	#define ICMP_REPLY 0x0
+    u_char icmp_code;
+    u_int16_t icmp_sum;
+    u_int16_t icmp_id;
+	u_int16_t icmp_sequence;
+};
+
+/*UDP header */
 struct sniff_udp {
-        u_short uh_sport;               /* source port */
-        u_short uh_dport;               /* destination port */
-        u_short uh_ulen;                /* udp length */
-        u_short uh_sum;                 /* udp checksum */
+	u_short uh_sport;       /* source port */
+	u_short uh_dport;       /* destination port */
+	u_short uh_ulen;        /* udp length */
+	u_short uh_sum;         /* udp checksum */
 };
 
-#define IP_HL(ip)               (((ip)->ip_vhl) & 0x0f)
-#define IP_V(ip)                (((ip)->ip_vhl) >> 4)
+#define IP_HL(ip)   (((ip)->ip_vhl) & 0x0f)
+#define IP_V(ip)    (((ip)->ip_vhl) >> 4)
 
 /* TCP header */
 typedef u_int tcp_seq;
@@ -81,34 +109,59 @@ struct sniff_tcp {
 };
 
 
+struct custom_icmp
+{
+	int type;
+	int code;
+	int id;
+	int sequence;
+
+} typedef ICMP_Msg;
+
 struct custom_udp
 {
-        int source_port;
-        int destination_port;
-        unsigned char *data;
+	int source_port;
+	int destination_port;
+	unsigned char *data;
+	int data_length;
 
-} typedef UDP_Packet;
+} typedef UDP_Datagram;
 
 struct custom_tcp
 {
-        int source_port;
-        int destination_port;
-        int sequence_number;
-        int ack_number;
-        int th_flag;
-        unsigned char *data;
-        int data_length;
+	int source_port;
+	int destination_port;
+	int sequence_number;
+	int ack_number;
+	int th_flag;
+	unsigned char *data;
+	int data_length;
 
 } typedef TCP_Segment;
 
 struct custom_ip
 {
-        char source_ip[IP_ADDR_LEN_STR];
-        char destination_ip[IP_ADDR_LEN_STR];
-        int protocole; // rajouté
-        TCP_Segment data;
+	char source_ip[IP_ADDR_LEN_STR];
+	char destination_ip[IP_ADDR_LEN_STR];
+	int protocole;
+	TCP_Segment tcp_data;
+	UDP_Datagram udp_data;
+	ICMP_Msg icmp_data;
 
 } typedef IP_Packet;
+
+struct custom_arp
+{
+	int hw_type;
+	int protocole;
+	int hw_addr_len;
+	int proto_addr_len;
+	int operation;
+	u_char source_mac[6];
+	u_char source_proto_addr[4];
+	u_char arp_dst[6];
+	u_char arp_dst_proto_addr[4];
+} typedef ARP_Packet;
 
 struct custom_ethernet
 {
@@ -116,7 +169,8 @@ struct custom_ethernet
         char destination_mac[ETHER_ADDR_LEN_STR];
         int ethernet_type;
         int frame_size;
-        IP_Packet data;
+        IP_Packet ip_data;
+        ARP_Packet arp_data;
 
 } typedef ETHER_Frame;
 

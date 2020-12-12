@@ -1,4 +1,14 @@
-//TODO : Initialiser toutes les strings directement dans le malloc
+/* TODO : 
+ * 	- TCP SYN attack
+ * 		- creer un tableau de structure syn_packets qui contient l'ip src,
+ * 		  ip dest, et me nb de syn capturé pour ces ip.
+ * 		- realloc le tableau à chaque paquet TCP syn qui entre
+ * 		- define un threshold
+ * 
+ * 	- Comment détecter si payload chiffré ?
+ * 				
+ */	
+
 
 
 #include <stdio.h>
@@ -7,6 +17,7 @@
 #include <ifaddrs.h>
 #include <errno.h>
 #include <stdbool.h>
+#include <syslog.h>
 #include "populate.h"
 
 #define ACTION_LEN_STR 14
@@ -182,6 +193,48 @@ bool is_direction_in_rules_valid(char *direction)
 	return false;
 }
 
+bool is_ip_match(char* rules_ip, char* captured_ip)
+{
+	if (strcmp(rules_ip, "any") == 0)
+	{
+		return true;
+	}
+	
+	if (strcmp(rules_ip, captured_ip) == 0)
+	{
+		return true;
+	}
+	
+	return false;
+}
+
+bool is_port_match(int rule_port, int capture_port)
+{
+	if (rule_port == 0)
+	{
+		return true;
+	}
+	
+	if (rule_port == capture_port)
+	{
+		return true;
+	}
+	
+	return false;
+}
+
+char* detect_udp_payload_protocol(int payload_length, unsigned char *payload)
+{
+ 	//is_protocole_http()
+	//is_protocole_ftp()
+}
+
+char *detect_tcp_payload_protocol(int payload_length, unsigned char *payload)
+{
+	//is_protocole_http()
+	//is_protocole_ftp()
+}
+
 void check_interface_validity(char *choosen_interface_name)
 {
     struct ifaddrs *ifa, *ifa_tmp;
@@ -305,6 +358,7 @@ int count_file_lines(FILE* file)
 Rule* rules_malloc(int count)
 {
     Rule* ptr = (Rule *) malloc(sizeof(Rule) * count);
+    int i;
     
     for(i=0; i<count; i++)
     {
@@ -522,85 +576,97 @@ int read_rules(FILE *rules_file, Rule *rules_ds, int count)
     return EXIT_SUCCESS;
 }
 
-int rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
+bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 {
-	printf("Protocole : %d\n", frame->data.protocole);
-    printf("IP src captured: %s\n", frame->data.source_ip);
-    printf("IP src rules: %s\n", rules_ds->ip_src);
-    printf("Port src captured: %d\n", frame->data.data.source_port);
-    printf("Port src rules: %d\n", rules_ds->port_src);
-    printf("IP dst captured: %s\n", frame->data.destination_ip);
-    printf("IP dst rules: %s\n", rules_ds->ip_dst);
-    printf("Port dst captured: %d\n", frame->data.data.destination_port);
-    printf("Port dst rules: %d\n", rules_ds->port_dst);
-    printf("content : %s\n", rules_ds->content);
-    if (rules_ds->content[0] == '\0')
-		printf("content est vide\n");
-    printf("msg : %s\n", rules_ds->msg);
-    if (rules_ds->msg[0] == '\0')
-		printf("msg est vide\n");
-    printf("---\n");
- 
-  // est ce que le protocole du packet est ICMP, UPD, TCP
-  /*  
-    if (strcmp(rules_ds->protocole, "udp") == 0
-    {
-		
-	} 
+	printf("Rules matcher start\n");
 	
-	if (strcmp(rules_ds->protocole, "tcp") == 0
-    {
-		
-	} 
 	
-	if (strcmp(rules_ds->protocole, "icmp") == 0
+	if (frame->ethernet_type == ETHERTYPE_IP)
     {
+		printf("Eternet type IP\n");
 		
+		if(!is_ip_match(rules_ds->ip_src, frame->ip_data.source_ip) ||
+		   !is_ip_match(rules_ds->ip_dst, frame->ip_data.destination_ip))
+		{
+			return false;
+		}
+		
+	
+	/*	
+		if (frame->ip_data.protocole == ICMP_PROTOCOL)
+		{
+			syslog(LOG_DEBUG, rules_ds->msg);
+
+		} 
+
+		
+		if (frame->ip_data.protocole == UDP_PROTOCOL)
+			
+		{
+			if (!is_port_match(rules_ds->port_src, frame->ip_data.udp_data.source_port) ||
+				!is_port_match(rules_ds->port_dst, frame->ip_data.udp_data.destination_port))
+			{
+				return;
+			}
+			
+			char *payload_protocol = detect_udp_payload_protocol(frame->ip_data.udp_data.data_length, frame->ip_data.udp_data.data);
+
+			if (strcmp(rules_ds->protocole, "udp") != 0 &&
+				strcmp(rules_ds->protocole, payload_protocol) != 0)
+				
+			{
+				return;
+			}
+			
+			syslog(LOG_DEBUG, rules_ds->msg);
+	
+		} 
+*/
+		if (frame->ip_data.protocole == TCP_PROTOCOL)
+		{
+		
+			if (!is_port_match(rules_ds->port_dst, frame->ip_data.tcp_data.source_port) ||
+				!is_port_match(rules_ds->port_src, frame->ip_data.tcp_data.source_port))
+			{
+				return false;
+			}
+		
+			if (strcmp(rules_ds->protocole, "tcp") == 0)
+			{
+				printf("Syslog\n");
+				syslog(LOG_DEBUG, rules_ds->msg);
+				return true;
+			}
+	
+		/*	char *payload_protocol = detect_tcp_payload_protocol(frame->ip_data.tcp_data.data_length, frame->ip_data.tcp_data.data);
+
+
+			if strcmp(rules_ds->protocole, payload_protocol) != 0)
+				
+			{
+				printf("Syslog\n");
+				syslog(LOG_DEBUG, rules_ds->msg);
+				return true;
+			}
+			
+			
+		*/
+		}
+		
+	}
+	
+	/*	
+	if (frame->ethernet_type == ETHERTYPE_ARP)	
+	 
+	{
+
 	} 
 	*/
-	
-	
-	
-	
-	
-   
-    
-    // source IP comparison
-	if (strcmp(rules_ds->ip_src, "any") != 0 && 
-		strcmp(rules_ds->ip_src, frame->data.source_ip) != 0)
-	{
-		return 0;
-	}
-	
-	// source port comparison
-	if (rules_ds->port_src != 0 && 
-		rules_ds->port_src != frame->data.data.source_port)
-	{
-		return 0;
-	}
-	
-	// destination IP comparison
-	if (strcmp(rules_ds->ip_dst, "any") != 0 && 
-		strcmp(rules_ds->ip_dst, frame->data.destination_ip) != 0)
-	{
-		return 0;
-	}
-  
-	// source port comparison
-	if (rules_ds->port_dst != 0 && 
-		rules_ds->port_dst != frame->data.data.destination_port)
-	{
-		return 0;
-	}
-  
-	// content and paylod comparison
-	//if (rules_ds->options.content[0] != '\0')
-	//	if 
-	
-	printf("SYSLOG : %s\n", rules_ds->msg);
-	return 1;
 
-  
+
+	return false;
+
+ 
 }
 
 void my_packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
@@ -623,7 +689,9 @@ void my_packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_c
 	{
 		printf("Rule n° %d\n", i);
 		frame_match_rules = rules_matcher(&rules[i], &frame);
+		
 	}
+	//check_syn_flood(struct packet_syn, &frame)
 
 }
 
@@ -665,7 +733,7 @@ int main(int argc, char *argv[])
 	handle = pcap_create(device, error_buffer);
     pcap_set_timeout(handle,10);
     pcap_activate(handle);
-    int total_packet_count = 3;
+    int total_packet_count = 1;
     Pcap_args args = {rules_file_lines_count, rules};
     
     pcap_loop(handle, total_packet_count, (pcap_handler) my_packet_handler, (u_char *) &args); // doit aussi prendre le tableau de structure RULES
