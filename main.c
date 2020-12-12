@@ -592,13 +592,17 @@ bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 		}
 		
 	
-	/*	
+		
 		if (frame->ip_data.protocole == ICMP_PROTOCOL)
 		{
-			syslog(LOG_DEBUG, rules_ds->msg);
-
+			if (strcmp(rules_ds->protocole, "icmp") == 0)
+			{
+				printf("Syslog\n");
+				syslog(LOG_DEBUG, rules_ds->msg);
+				return true;
+			}
 		} 
-	*/
+	
 		
 		if (frame->ip_data.protocole == UDP_PROTOCOL)
 			
