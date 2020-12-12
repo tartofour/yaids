@@ -598,7 +598,7 @@ bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 			syslog(LOG_DEBUG, rules_ds->msg);
 
 		} 
-
+	*/
 		
 		if (frame->ip_data.protocole == UDP_PROTOCOL)
 			
@@ -606,22 +606,28 @@ bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 			if (!is_port_match(rules_ds->port_src, frame->ip_data.udp_data.source_port) ||
 				!is_port_match(rules_ds->port_dst, frame->ip_data.udp_data.destination_port))
 			{
-				return;
+				return false;
 			}
 			
-			char *payload_protocol = detect_udp_payload_protocol(frame->ip_data.udp_data.data_length, frame->ip_data.udp_data.data);
+			if (strcmp(rules_ds->protocole, "udp") == 0)
+			{
+				printf("Syslog\n");
+				syslog(LOG_DEBUG, rules_ds->msg);
+				return true;
+			}
+			
+			/*char *payload_protocol = detect_udp_payload_protocol(frame->ip_data.udp_data.data_length, frame->ip_data.udp_data.data);
 
-			if (strcmp(rules_ds->protocole, "udp") != 0 &&
-				strcmp(rules_ds->protocole, payload_protocol) != 0)
+			if (strcmp(rules_ds->protocole, payload_protocol) != 0)
 				
 			{
 				return;
 			}
-			
-			syslog(LOG_DEBUG, rules_ds->msg);
+			*/
+		
 	
 		} 
-*/
+
 		if (frame->ip_data.protocole == TCP_PROTOCOL)
 		{
 		
