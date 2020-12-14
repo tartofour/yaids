@@ -6,6 +6,8 @@
  * 		- define un threshold
  * 
  * 	- Comment détecter si payload chiffré ?
+ * 	- XSS detector / injection SQL
+ * 		⁻ regex pcre ?
  * 				
  */	
 
@@ -578,12 +580,11 @@ int read_rules(FILE *rules_file, Rule *rules_ds, int count)
 
 bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 {
-	printf("Rules matcher start\n");
+	//printf("Rules matcher start\n");
 	
 	
 	if (frame->ethernet_type == ETHERTYPE_IP)
     {
-		printf("Eternet type IP\n");
 		
 		if(!is_ip_match(rules_ds->ip_src, frame->ip_data.source_ip) ||
 		   !is_ip_match(rules_ds->ip_dst, frame->ip_data.destination_ip))
@@ -647,6 +648,20 @@ bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 				syslog(LOG_DEBUG, rules_ds->msg);
 				return true;
 			}
+			
+			if (strcmp(rules_ds->protocole, "http") == 0)
+			{
+				printf("HTTP OK");
+				if (strstr(frame->ip_data.tcp_data.data, rules_ds->content) != NULL)
+				{
+					syslog(LOG_DEBUG, rules_ds->msg);
+				}
+				
+				
+					return true;
+			} 
+			
+			
 	
 		/*	char *payload_protocol = detect_tcp_payload_protocol(frame->ip_data.tcp_data.data_length, frame->ip_data.tcp_data.data);
 
@@ -697,10 +712,15 @@ void my_packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_c
 	populate_packet_ds(header, packet, &frame);
 	for (i=0; i<rules_total_nb && !frame_match_rules; i++)
 	{
-		printf("Rule n° %d\n", i);
+		//printf("Rule n° %d\n", i);
 		frame_match_rules = rules_matcher(&rules[i], &frame);
 		
 	}
+	printf("Payload length : %d\n", frame.ip_data.tcp_data.data_length);
+
+	print_payload(frame.ip_data.tcp_data.data_length , frame.ip_data.tcp_data.data); // test tcp
+	//print_payload(frame.ip_data.udp_data.data_length , frame.ip_data.udp_data.data); // test tcp
+
 	//check_syn_flood(struct packet_syn, &frame)
 
 }
@@ -743,7 +763,7 @@ int main(int argc, char *argv[])
 	handle = pcap_create(device, error_buffer);
     pcap_set_timeout(handle,10);
     pcap_activate(handle);
-    int total_packet_count = 1;
+    int total_packet_count = 20;
     Pcap_args args = {rules_file_lines_count, rules};
     
     pcap_loop(handle, total_packet_count, (pcap_handler) my_packet_handler, (u_char *) &args); // doit aussi prendre le tableau de structure RULES
