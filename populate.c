@@ -195,24 +195,7 @@ int populate_packet_ds(const struct pcap_pkthdr *header, const u_char *packet, E
 			
 			custom_packet.tcp_data = custom_segment;
 			custom_frame->ip_data = custom_packet;
-		  
-			/*
-			printf("Tailles\n");
-			printf("taille header : %d\n", header->caplen);
-			printf("taille ethernet : %d\n", SIZE_ETHERNET);
-			printf("taille ip : %d\n", size_ip);
-			printf("taille tcp : %d\n", size_tcp);
-			printf("Payload length : %d\n", payload_length);
-
-			
-			printf("\nTCP Segment\n");
-			printf("Port Source : %d\n", custom_segment.source_port);
-			printf("Port Destination : %d\n", custom_segment.destination_port);
-			printf("Flag : %d\n", custom_segment.th_flag);
-			printf("Sequence number : %d\n", custom_segment.sequence_number);
-			printf("Payload length : %d\n", custom_segment.data_length);
-			*/
-				
+		  	
 		}
 	}
 	return 0;

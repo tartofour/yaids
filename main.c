@@ -1,14 +1,43 @@
 /* TODO : 
+ * 	-	detect_payload_encoding
+ *  - 	decode_payload
+ * 
+ * 
+ * Content-Encoding: gzip
+ * Content-Length: 3078
+ * Content-Type: text/html
+ * 
+ * 
+ * 
  * 	- TCP SYN attack
- * 		- creer un tableau de structure syn_packets qui contient l'ip src,
- * 		  ip dest, et me nb de syn capturé pour ces ip.
+ * 		
+ * 		- creer un tableau de structure syn_requests qui contient l'ip src, 
+ * 		  l'ip dest, et timestamp
+ * 			- ajouter tout les packet tcp qui arrivnet (.
  * 		- realloc le tableau à chaque paquet TCP syn qui entre
  * 		- define un threshold
  * 
+ * 	- ARP spoofing
+ * 		- tableau arp_request
+ * 
  * 	- Comment détecter si payload chiffré ?
+ * 
  * 	- XSS detector / injection SQL
  * 		⁻ regex pcre ?
+ * 
+ *  - SSH
+ * 
+ * 	- DHCP
+ * 	- DNS
+
+ * 	- SMB
+ * 	- TLS
+ * 	- RDP
+ * 	- SNMP
+ * 	- telnet
  * 				
+ * 
+ * 	- free(chaque structure);
  */	
 
 
@@ -20,12 +49,22 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <syslog.h>
+//#include <time.h>
+//#include <zlib.h>
 #include "populate.h"
 
 #define ACTION_LEN_STR 14
 #define PROTOCOLE_LEN_STR 15
 #define IP_ADDR_LEN_STR 16
 #define DIRECTION_LEN_STR 3
+
+#define HTTP_VERSION_LEN 20
+#define HTTP_STATUS_LEN 20
+#define HTTP_METHOD_LEN 10
+#define HTTP_MSG_TYPE_LEN 9
+#define HTTP_HOST_LEN 255
+#define HTTP_CONTENT_TYPE_LEN 255
+#define HTTP_ENCODING_LEN 50
 
 #define STR_MAX_SIZE 255
 #define ARGS_MAX_SIZE 255
@@ -41,6 +80,8 @@ struct ids_rule
     int port_dst;
     char content[STR_MAX_SIZE];
     char msg[STR_MAX_SIZE];
+   // int count;
+   // time_t seconds;
     
 } typedef Rule;
 
@@ -50,6 +91,54 @@ struct pcap_arguments
 	Rule *rules_ptr;
 	
 } typedef Pcap_args;
+
+
+struct http_message
+{
+	char version[HTTP_VERSION_LEN];
+	int status; 
+	char method[HTTP_METHOD_LEN]; // POST, GET		
+	char msg_type[HTTP_MSG_TYPE_LEN];
+	char host[HTTP_HOST_LEN];
+	char content_type[HTTP_CONTENT_TYPE_LEN];
+	char encoding[HTTP_ENCODING_LEN]; // gzip - deflate - ...
+	int body_len;
+	unsigned char *body;
+	
+} typedef Http_msg;
+/*
+int check_syn_flood(struct packet_syn, ETHER_Frame *frame, time_t capture_time)
+{
+	
+}
+
+*/
+
+/*
+int gzip_inflate(char *compr, int comprLen, char *uncompr, int uncomprLen)
+{
+    int err;
+    z_stream d_stream; // decompression stream 
+
+    d_stream.zalloc = (alloc_func)0;
+    d_stream.zfree = (free_func)0;
+    d_stream.opaque = (voidpf)0;
+
+    d_stream.next_in  = (unsigned char *)compr;
+    d_stream.avail_in = comprLen;
+
+    d_stream.next_out = (unsigned char *)uncompr;
+    d_stream.avail_out = uncomprLen;
+
+    err = inflateInit2(&d_stream, 16+MAX_WBITS);
+    if (err != Z_OK) return err;
+
+    while (err != Z_STREAM_END) err = inflate(&d_stream, Z_NO_FLUSH);
+
+    err = inflateEnd(&d_stream);
+    return err;
+}
+*/
 
 void print_help(char * prg_name)
 {
@@ -83,6 +172,34 @@ void print_rules(Rule *rules, int count)
 		printf("content : %s\n", rules[i].content);
 		printf("\n");
     }
+}
+
+void initialize_http_message_struct(Http_msg message)
+{
+	memset(message.version, 0, HTTP_VERSION_LEN);
+	memset(message.method, 0, HTTP_METHOD_LEN);
+	memset(message.msg_type, 0, HTTP_MSG_TYPE_LEN);
+	memset(message.host, 0, HTTP_HOST_LEN);
+	memset(message.content_type, 0, HTTP_CONTENT_TYPE_LEN);
+	memset(message.encoding, 0, HTTP_ENCODING_LEN);
+	message.status = -1;
+	message.body_len = -1;
+	message.body = NULL;
+}
+
+void initialize_rule_struct(Rule *rule)
+{
+	memset(rule->action, 0, ACTION_LEN_STR);
+	memset(rule->protocole, 0, PROTOCOLE_LEN_STR);
+	memset(rule->ip_src, 0, IP_ADDR_LEN_STR);
+	memset(rule->direction, 0, DIRECTION_LEN_STR);
+	memset(rule->ip_dst, 0, IP_ADDR_LEN_STR);
+	memset(rule->content, 0, STR_MAX_SIZE);
+	memset(rule->msg, 0, STR_MAX_SIZE);
+	rule->port_src = -1;
+	rule->port_dst = -1;
+	//rule->count = -1;
+	//rule->seconds = -1;
 }
 
 void remove_char_from_str(char char_to_remove, char *str, char *new_str)
@@ -119,6 +236,7 @@ bool is_protocole_in_rules_valid(char *protocole)
 		strcmp(protocole, "tcp") == 0 ||
 		strcmp(protocole, "udp") == 0 ||
 		strcmp(protocole, "icmp") == 0 ||
+		strcmp(protocole, "ssh") == 0 ||
 		strcmp(protocole, "ftp") == 0)
 		
 		return true;
@@ -223,6 +341,37 @@ bool is_port_match(int rule_port, int capture_port)
 	}
 	
 	return false;
+}
+
+int get_http_msg_type(char *http_status)
+{
+	char *str_token;
+	str_token = strtok(http_status, " ");
+	
+	// Request
+	if (strcmp(str_token, "GET") == 0 ||
+		strcmp(str_token, "HEAD") == 0 ||
+		strcmp(str_token, "POST") == 0 ||
+		strcmp(str_token, "PUT") == 0 ||
+		strcmp(str_token, "DELETE") == 0 ||
+		strcmp(str_token, "CONNECT") == 0 ||
+		strcmp(str_token, "OPTIONS") == 0 ||
+		strcmp(str_token, "TRACE") == 0 ||
+		strcmp(str_token, "PATCH") == 0)
+	{
+		return 1;
+	}
+	
+	// Response
+	else if (strcmp(str_token, "HTTP/1.1") == 0 ||
+		strcmp(str_token, "HTTP/1.2") == 0 ||
+		strcmp(str_token, "HTTP/2") == 0)
+	{
+		return 2;
+	}
+	
+	return 0;
+	
 }
 
 char* detect_udp_payload_protocol(int payload_length, unsigned char *payload)
@@ -364,18 +513,135 @@ Rule* rules_malloc(int count)
     
     for(i=0; i<count; i++)
     {
-		memset(ptr->action, 0, ACTION_LEN_STR);
-		memset(ptr->protocole, 0, PROTOCOLE_LEN_STR);
-		memset(ptr->ip_src, 0, IP_ADDR_LEN_STR);
-		memset(ptr->direction, 0, DIRECTION_LEN_STR);
-		memset(ptr->ip_dst, 0, IP_ADDR_LEN_STR);
-		memset(ptr->content, 0, STR_MAX_SIZE);
-		memset(ptr->msg, 0, STR_MAX_SIZE);
-		ptr->port_src = -1;
-		ptr->port_dst = -1;
+		initialize_rule_struct(&ptr[i]);
 	}
 	
     return ptr;
+}
+
+void set_http_basic_info(char * first_http_line, Http_msg *http_msg)
+{
+	printf("basic ça entre\n");
+	char *str_token;
+	
+	str_token = strtok(first_http_line, " ");
+	
+
+	// Request
+	if (strcmp(str_token, "GET") == 0 ||
+		strcmp(str_token, "HEAD") == 0 ||
+		strcmp(str_token, "POST") == 0 ||
+		strcmp(str_token, "PUT") == 0 ||
+		strcmp(str_token, "DELETE") == 0 ||
+		strcmp(str_token, "CONNECT") == 0 ||
+		strcmp(str_token, "OPTIONS") == 0 ||
+		strcmp(str_token, "TRACE") == 0 ||
+		strcmp(str_token, "PATCH") == 0)
+	{
+		strcpy(http_msg->msg_type, "request");
+		strcpy(http_msg->method, str_token);
+		
+		str_token = strtok(NULL, " ");
+		str_token = strtok(NULL, " ");
+		strcpy(http_msg->version, str_token);
+		
+	/*	
+		printf("Type : %s\n", http_msg->msg_type);
+		printf("HTTP version : %s\n", http_msg->version);
+		
+	*/	
+	}
+	
+	// Response
+	else if (strcmp(str_token, "HTTP/1.1") == 0 ||
+		strcmp(str_token, "HTTP/1.2") == 0 ||
+		strcmp(str_token, "HTTP/2") == 0)
+	{
+		strcpy(http_msg->msg_type, "response");
+		strcpy(http_msg->version, str_token);
+		str_token = strtok(NULL, " ");
+		http_msg->status = atoi(str_token);
+		
+	/*
+		printf("Type : %s\n", http_msg->msg_type);
+		printf("HTTP version : %s\n", http_msg->version);
+		printf("Status code : %d\n", http_msg->status);
+	*/
+	}
+}
+
+void populate_http_msg(unsigned char *msg_captured, Http_msg *http_msg)
+{
+	
+	char *msg_line;
+    char *msg_line_save_ptr;
+    char *key;
+    char *key_save_ptr;
+    char *html = NULL;
+    char *delim = "\r\n\r\n";
+
+    
+    
+    if (strlen(msg_captured) < 1)
+    {
+		return;
+	}
+	
+	html = strstr(msg_captured, delim);  // should test for NULL ...
+    if (html != NULL)
+	{
+		html[0] = '\0';
+		//printf("Header:\n\n%s\n\n", msg_captured);
+		//printf("HTML:\n\n%s\n\n", html+strlen(delim));
+		http_msg->body = html+strlen(delim);
+	}
+    
+    msg_line = strtok_r(msg_captured, "\n", &msg_line_save_ptr);
+ 	
+    set_http_basic_info(msg_line, http_msg);
+    
+    
+    msg_line = strtok_r(NULL, "\n", &msg_line_save_ptr);  
+       
+    while(msg_line != NULL)
+    {
+		key = strtok_r(msg_line, ":", &key_save_ptr);
+		
+		if (strcmp(key, "Host") == 0)
+		{
+			key = strtok_r(NULL, ":", &key_save_ptr);
+			//printf("Host : %s\n", key);
+			strcpy(http_msg->host, key);
+		}
+		
+		else if (strcmp(key, "Content-Encoding") == 0)
+		{
+			key = strtok_r(NULL, ":", &key_save_ptr);
+			//printf("Encoding : %s\n", key);
+			strcpy(http_msg->encoding, key);
+		}
+		
+		else if (strcmp(key, "Content-Length") == 0)
+		{
+			key = strtok_r(NULL, ":", &key_save_ptr);
+			//printf("content len : %d\n", atoi(key));
+			http_msg->body_len = atoi(key);
+		}
+		
+		else if (strcmp(key, "Content-Type") == 0)
+		{
+			key = strtok_r(NULL, ":", &key_save_ptr);
+			//printf("Content type : %s\n", key);
+			strcpy(http_msg->content_type, key);
+		}	
+		
+		else
+		{
+			key = strtok_r(NULL, ":", &key_save_ptr);
+		}
+		
+		msg_line = strtok_r(NULL, "\n", &msg_line_save_ptr);
+	}
 }
 
 int populate_rule_header(char *line, char *delim, Rule *rule_ds)
@@ -492,7 +758,7 @@ int populate_rule_option(char *line, char *delim, Rule *rule_ds)
             str_token = strtok_r(NULL, delim, &saveptr);
             remove_char_from_str('"', str_token, item);
             strcpy(rule_ds->msg, item);
-            printf("msg : %s\n", rule_ds->msg); 
+            //printf("msg : %s\n", rule_ds->msg); 
         }
 
         else if (strcmp(key, "content") == 0)
@@ -500,9 +766,25 @@ int populate_rule_option(char *line, char *delim, Rule *rule_ds)
             str_token = strtok_r(NULL, delim, &saveptr);
             remove_char_from_str('"', str_token, item);
             strcpy(rule_ds->content, item);
-            printf("content : %s\n", rule_ds->content);
+            //printf("content : %s\n", rule_ds->content);
         }
-
+        /*
+        else if (strcmp(key, "count") == 0)
+        {
+            str_token = strtok_r(NULL, delim, &saveptr);
+            remove_char_from_str('"', str_token, item);
+            rule_ds->count = atoi(item);
+            //printf("content : %s\n", rule_ds->content);
+        }
+        
+        else if (strcmp(key, "seconds") == 0)
+        {
+            str_token = strtok_r(NULL, delim, &saveptr);
+            remove_char_from_str('"', str_token, item);
+            rule_ds->secondes = atoi(item);
+            //printf("content : %s\n", rule_ds->content);
+        }
+		*/
         else
         {
             return EXIT_FAILURE;
@@ -580,9 +862,9 @@ int read_rules(FILE *rules_file, Rule *rules_ds, int count)
 
 bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 {
-	//printf("Rules matcher start\n");
+	Http_msg http_msg;
 	
-	
+						
 	if (frame->ethernet_type == ETHERTYPE_IP)
     {
 		
@@ -591,8 +873,6 @@ bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 		{
 			return false;
 		}
-		
-	
 		
 		if (frame->ip_data.protocole == ICMP_PROTOCOL)
 		{
@@ -603,10 +883,8 @@ bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 				return true;
 			}
 		} 
-	
 		
 		if (frame->ip_data.protocole == UDP_PROTOCOL)
-			
 		{
 			if (!is_port_match(rules_ds->port_src, frame->ip_data.udp_data.source_port) ||
 				!is_port_match(rules_ds->port_dst, frame->ip_data.udp_data.destination_port))
@@ -620,22 +898,10 @@ bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 				syslog(LOG_DEBUG, rules_ds->msg);
 				return true;
 			}
-			
-			/*char *payload_protocol = detect_udp_payload_protocol(frame->ip_data.udp_data.data_length, frame->ip_data.udp_data.data);
-
-			if (strcmp(rules_ds->protocole, payload_protocol) != 0)
-				
-			{
-				return;
-			}
-			*/
-		
-	
 		} 
 
 		if (frame->ip_data.protocole == TCP_PROTOCOL)
 		{
-		
 			if (!is_port_match(rules_ds->port_dst, frame->ip_data.tcp_data.source_port) ||
 				!is_port_match(rules_ds->port_src, frame->ip_data.tcp_data.source_port))
 			{
@@ -644,54 +910,112 @@ bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 		
 			if (strcmp(rules_ds->protocole, "tcp") == 0)
 			{
+				
 				printf("Syslog\n");
 				syslog(LOG_DEBUG, rules_ds->msg);
 				return true;
+			}
+			
+			if (strcmp(rules_ds->protocole, "ftp") == 0)
+			{
+				if (strstr(frame->ip_data.tcp_data.data, "230 Login successful.\r\n") != NULL)
+				{
+					printf("Syslog\n");
+					syslog(LOG_DEBUG, rules_ds->msg);
+					return true;	
+				}
+			}
+			
+			if (strcmp(rules_ds->protocole, "ssh") == 0)
+			{				
+				if (strstr(frame->ip_data.tcp_data.data, "SSH") != NULL)
+				{
+					printf("Syslog\n");
+					syslog(LOG_DEBUG, rules_ds->msg);
+					return true;
+				}
 			}
 			
 			if (strcmp(rules_ds->protocole, "http") == 0)
 			{
-				printf("HTTP OK");
-				if (strstr(frame->ip_data.tcp_data.data, rules_ds->content) != NULL)
+				initialize_http_message_struct(http_msg);
+				
+				
+				populate_http_msg(frame->ip_data.tcp_data.data, &http_msg);
+				
+				
+				/*
+				if (strstr(http_msg.version, "HTTP") != NULL)
 				{
-					syslog(LOG_DEBUG, rules_ds->msg);
+				printf("version : %s\n", http_msg.version);
+				//printf("status : %s", http_msg.status);
+				//printf("method : %s", http_msg.method);
+				printf("msg_type : %s\n", http_msg.msg_type);
+				//printf("host : %s\n", http_msg.host);
+				//Printf("content type : %s\n", http_msg.content_type);
+				//printf("encoding : %s\n", http_msg.encoding);
+				//printf("body length : %d\n", http_msg.body_len);
+				//printf("body : %s\n", http_msg.body);
 				}
-				
-				
-					return true;
-			} 
-			
-			
-	
-		/*	char *payload_protocol = detect_tcp_payload_protocol(frame->ip_data.tcp_data.data_length, frame->ip_data.tcp_data.data);
-
-
-			if strcmp(rules_ds->protocole, payload_protocol) != 0)
-				
-			{
-				printf("Syslog\n");
-				syslog(LOG_DEBUG, rules_ds->msg);
-				return true;
+				*/	
+				  
+				 
+				if (strstr(http_msg.version, "HTTP") != NULL) // If http message valid
+				{
+					if (rules_ds->content[0] == '\0')
+					{	
+						syslog(LOG_DEBUG, rules_ds->msg);
+						return true;
+					}
+					
+					if (strcmp(http_msg.msg_type, "request") == 0)
+					{	
+						if (strstr(http_msg.body, rules_ds->content) != NULL)
+						{
+							syslog(LOG_DEBUG, rules_ds->msg);
+							return true;
+						}	
+					}
+					
+					if (strcmp(http_msg.msg_type, "response") == 0)
+					{
+						
+						if (strstr(http_msg.body, rules_ds->content) != NULL)
+							{
+								syslog(LOG_DEBUG, rules_ds->msg);
+								return true;
+							}
+						
+						
+						/*
+						if (http_msg.encoding[0] == '\0')			
+						{
+							if (strstr(http_msg.body, rules_ds->content) != NULL)
+							{
+								syslog(LOG_DEBUG, rules_ds->content);
+								return true;
+							}
+						}
+						
+						if (strcmp(http_msg.encoding, "gzip") == 0)			
+						{
+							syslog(LOG_DEBUG, "Http body is compressed with gzip, unable to read");
+							return false;
+							//http_decoded_body = gzip_decode(http_msg.response.body);
+						}
+						*/
+					}
+					
+				}
 			}
-			
-			
-		*/
 		}
-		
 	}
 	
-	/*	
 	if (frame->ethernet_type == ETHERTYPE_ARP)	
-	 
 	{
-
+		
 	} 
-	*/
-
-
 	return false;
-
- 
 }
 
 void my_packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
@@ -710,18 +1034,20 @@ void my_packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_c
 	rules = params->rules_ptr;
 	
 	populate_packet_ds(header, packet, &frame);
+	
 	for (i=0; i<rules_total_nb && !frame_match_rules; i++)
 	{
-		//printf("Rule n° %d\n", i);
+		printf("Rule n° %d\n", i);
 		frame_match_rules = rules_matcher(&rules[i], &frame);
 		
 	}
 	printf("Payload length : %d\n", frame.ip_data.tcp_data.data_length);
 
-	print_payload(frame.ip_data.tcp_data.data_length , frame.ip_data.tcp_data.data); // test tcp
+	//print_payload(frame.ip_data.tcp_data.data_length , frame.ip_data.tcp_data.data); // test tcp
 	//print_payload(frame.ip_data.udp_data.data_length , frame.ip_data.udp_data.data); // test tcp
 
-	//check_syn_flood(struct packet_syn, &frame)
+	//check_syn_flood(struct packet_syn, &frame, header->ts.tv_sec)
+	
 
 }
 
@@ -763,7 +1089,7 @@ int main(int argc, char *argv[])
 	handle = pcap_create(device, error_buffer);
     pcap_set_timeout(handle,10);
     pcap_activate(handle);
-    int total_packet_count = 20;
+    int total_packet_count = -1;
     Pcap_args args = {rules_file_lines_count, rules};
     
     pcap_loop(handle, total_packet_count, (pcap_handler) my_packet_handler, (u_char *) &args); // doit aussi prendre le tableau de structure RULES
