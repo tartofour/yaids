@@ -27,15 +27,73 @@ void print_payload(int payload_length, unsigned char *payload)
     }
 }
 
+void print_ethernet_header(ETHER_Frame *frame)
+{
+    printf("Source MAC : %s\n", frame->source_mac);
+	printf("Destination MAC : %s\n", frame->source_mac);
+    printf("Ethertype : %d\n", frame->ethertype);
+    printf("\n");
+}
+
+void print_ip_header(IP_Packet *packet)
+{
+    printf("Source IP : %s\n", packet->source_ip);
+	printf("Destination IP : %s\n", packet->destination_ip);
+    printf("Layer 4 protocol : %d\n", packet->protocol);
+    printf("\n");
+}
+
+void print_tcp_header(TCP_Segment *segment)
+{
+    printf("Source Port : %d\n", segment->source_port);
+	printf("Destination Port : %d\n", segment->destination_port);
+	printf("Sequence Number : %d\n", segment->sequence_number);
+	printf("ACK number : %d\n", segment->ack_number);
+	printf("Flag : %d\n", segment->flag);
+    printf("Data Length : %d\n", segment->data_length);
+    printf("\n");
+}
+
+void print_udp_header(UDP_Datagram *datagram)
+{
+    printf("Source Port : %d\n", datagram->source_port);
+	printf("Destination Port : %d\n", datagram->destination_port);
+    printf("Data Length : %d\n", datagram->data_length);
+    printf("\n");
+}
+
+void print_arp_header(ARP_Packet *packet)
+{
+    printf("Hardware Type : %d\n", packet->hw_type);
+	printf("Protocol Layer 3 : %d\n", packet->proto_layer3);
+	printf("Hardware Address Length : %d\n", packet->hw_addr_len);
+	printf("Protocol Address Length : %d\n", packet->proto_layer3_addr_len);
+	printf("Operation : %d\n", packet->operation);
+	//printf("Sender Hardware Address : %d\n", packet->);
+	//printf("Sender Internet Address : %d\n", packet->);
+	//printf("Target Hardware Address : %d\n", packet->);
+	//printf("Target Internet Address : %d\n", packet->);
+	printf("\n");
+}	
+
+void print_icmp_header(ICMP_Msg *message)
+{
+    printf("Type : %d\n", message->type);
+    printf("Code : %d\n", message->code);
+	printf("ID : %d\n", message->id);
+	printf("Sequence : %d\n", message->sequence);
+	printf("\n");
+}	
+
 int populate_packet_ds(const struct pcap_pkthdr *header, const u_char *packet, ETHER_Frame *custom_frame)
 {
 	const struct sniff_ethernet *ethernet; /* The ethernet header */
-	const struct sniff_ip *arp; /* The IP header */
+	//const struct sniff_arp *arp; /* The IP header */
 	const struct sniff_ip *ip; /* The IP header */
 	const struct sniff_icmp *icmp; /*The ICMP header */
 	const struct sniff_tcp *tcp; /* The TCP header */
 	const struct sniff_udp *udp; /*The UDP header */
-	unsigned char *payload; /* Packet payload */
+	unsigned char *payload = NULL; /* Packet payload */
 
 	u_int size_ip;
 	u_int size_tcp;
@@ -56,26 +114,25 @@ int populate_packet_ds(const struct pcap_pkthdr *header, const u_char *packet, E
 	strcpy(custom_frame->source_mac,src_mac_address);
 	strcpy(custom_frame->destination_mac, dst_mac_address);
 	custom_frame->frame_size = header->caplen;
-	custom_frame->ethernet_type = ethernet->ether_type;
-   /* 
-	printf("\nEthernet Frame\n");
-	printf("MAC Source : %s\n", custom_frame->source_mac);
-	printf("MAC Destination : %s\n", custom_frame->destination_mac);
-	printf("Frame size : %d\n", custom_frame->frame_size);
-	printf("Ethertype : %d\n", custom_frame->ethernet_type);
-	*/
-	
+	custom_frame->ethertype = ethernet->ether_type;
+	//print_ethernet_header(custom_frame);
+   
 	// ARP
 	
 	if(ntohs(ethernet->ether_type) == ETHERTYPE_ARP) 
 	{
-		custom_frame->ethernet_type = ARP;
-		printf("\nARP packet: %d\n",custom_frame->ethernet_type);
+		printf("--------------\n");
+		printf("ARP packet: %d\n",custom_frame->ethertype);	
 		
-		arp = (struct sniff_ip*)(packet + SIZE_ETHERNET);
-		ARP_Packet custom_packet;    
+		custom_frame->ethertype = ARP;
 		
+		//arp = (struct sniff_arp*)(packet + SIZE_ETHERNET);
+		//ARP_Packet custom_arp_packet;
+		   
+		strcpy(custom_frame->payload_protocol, "arp");
 		
+		//print_ethernet_header(ethernet);
+
 	}
 	
 		
@@ -83,9 +140,11 @@ int populate_packet_ds(const struct pcap_pkthdr *header, const u_char *packet, E
 		//IP
 	if(ntohs(ethernet->ether_type) == ETHERTYPE_IP) 
 	{
-		custom_frame->ethernet_type = IPV4;
-		printf("\nIPV4 packet: %d\n",custom_frame->ethernet_type);
+		printf("--------------\n");
+		printf("IPV4 packet: %d\n",custom_frame->ethertype);
 
+		custom_frame->ethertype = IPV4;
+		
 		ip = (struct sniff_ip*)(packet + SIZE_ETHERNET);
 		IP_Packet custom_packet;
 	   
@@ -96,7 +155,9 @@ int populate_packet_ds(const struct pcap_pkthdr *header, const u_char *packet, E
 
 		strcpy(custom_packet.source_ip,src_ip);
 		strcpy(custom_packet.destination_ip, dst_ip);
-		custom_packet.protocole = ip->ip_p; 
+		custom_packet.protocol = ip->ip_p; 
+
+		//print_ip_header(&custom_packet);
 
 		size_ip = IP_HL(ip)*4;
 
@@ -106,15 +167,10 @@ int populate_packet_ds(const struct pcap_pkthdr *header, const u_char *packet, E
 			return ERROR;
 		}
 		
-		/*
-		printf("\nIP Packet\n");
-		printf("IP Source : %s\n", custom_packet.source_ip);
-		printf("IP Destination : %s\n", custom_packet.destination_ip);
-		printf("Protocole couche 4 : %d\n", custom_packet.protocole);
-		*/
 		if((int)ip->ip_p==ICMP_PROTOCOL)
 		{
-			printf("\nICMP Handling\n");
+			printf("ICMP Handling\n");
+
 			icmp = (struct sniff_icmp*)(packet + SIZE_ETHERNET + size_ip);
 			ICMP_Msg custom_icmp_msg;
 			
@@ -125,21 +181,15 @@ int populate_packet_ds(const struct pcap_pkthdr *header, const u_char *packet, E
 			
 			custom_packet.icmp_data = custom_icmp_msg;
 			custom_frame->ip_data = custom_packet;
+			strcpy(custom_frame->payload_protocol, "icmp");
 			
-			/*
-			printf("\nICMP Message\n");
-			printf("Type : %d\n", custom_icmp_msg.type);
-			printf("Code : %d\n", custom_icmp_msg.code);
-			printf("ID : %d\n", custom_icmp_msg.id);
-			printf("Sequence : %d\n", custom_icmp_msg.sequence);					
-			*/
-			
+			//print_icmp_header(&custom_icmp_msg);
 		}
-		
 		
 		if((int)ip->ip_p==UDP_PROTOCOL)
 		{
-			printf("\nUDP Handling\n");
+			
+			printf("UDP Handling\n");
 			udp = (struct sniff_udp*)(packet + SIZE_ETHERNET + size_ip);	
 			UDP_Datagram custom_udp_packet;				
 			
@@ -151,23 +201,17 @@ int populate_packet_ds(const struct pcap_pkthdr *header, const u_char *packet, E
 			custom_udp_packet.destination_port = ntohs(udp->uh_dport);
 			custom_udp_packet.data = payload;
 			custom_udp_packet.data_length = udp->uh_ulen;
-			
-			/*
-			printf("\nUDP Datagram\n");
-			printf("Port Source : %d\n", custom_udp_packet.source_port);
-			printf("Port Destination : %d\n", custom_udp_packet.destination_port);
-			printf("Longueur Data : %d\n", custom_udp_packet.data_length);
-			//print_payload(custom_udp_packet.data_length, custom_udp_packet.data);
-			*/
-			
+			strcpy(custom_frame->payload_protocol, "udp");
+						
 			custom_packet.udp_data = custom_udp_packet;
 			custom_frame->ip_data = custom_packet;
-	 
+			
+			//print_udp_header(&custom_udp_packet);
 		}
 		
 		if((int)ip->ip_p==TCP_PROTOCOL)
 		{
-			printf("\nTCP Handling\n");
+			printf("TCP Handling\n");
 			tcp = (struct sniff_tcp*)(packet + SIZE_ETHERNET + size_ip);
 			TCP_Segment custom_segment;
 
@@ -184,16 +228,31 @@ int populate_packet_ds(const struct pcap_pkthdr *header, const u_char *packet, E
 			
 			custom_segment.source_port = ntohs(tcp->th_sport);
 			custom_segment.destination_port = ntohs(tcp->th_dport);
-			custom_segment.th_flag = (int)tcp->th_flags;
+			custom_segment.flag = (int)tcp->th_flags;
 			custom_segment.sequence_number = tcp->th_seq;
 			custom_segment.data = payload;
 			custom_segment.data_length = payload_length;
-			
-			//print_payload(custom_segment.data_length, custom_segment.data);
 
-			
 			custom_packet.tcp_data = custom_segment;
 			custom_frame->ip_data = custom_packet;
+			strcpy(custom_frame->payload_protocol, "tcp");
+			
+			//print_tcp_header(&custom_segment);
+		  	
+		  	if(strstr((char*)custom_segment.data, "HTTP/1.1") != NULL || strstr((char*)custom_segment.data, "HTTP/1.2") != NULL || strstr((char*)custom_segment.data, "HTTP/2") != NULL)
+			{
+				strcpy(custom_frame->payload_protocol, "http");
+			}
+			
+			if(strstr((char*)custom_segment.data, "SSH-2.0-OpenSSH") != NULL)
+			{
+				strcpy(custom_frame->payload_protocol, "ssh");
+			}
+			
+			if(strstr((char*)custom_segment.data, "220 (vsFTPd ") != NULL)
+			{
+				strcpy(custom_frame->payload_protocol, "ftp");
+			}
 		  	
 		}
 	}

@@ -9,6 +9,7 @@
 
 #define ETHER_ADDR_LEN_STR 18
 #define IP_ADDR_LEN_STR 16
+#define PAYLOAD_PROTOCOL_LEN_STR 20
 
 #define ARP 2054
 #define IPV4 2048
@@ -133,7 +134,7 @@ struct custom_tcp
 	int destination_port;
 	int sequence_number;
 	int ack_number;
-	int th_flag;
+	int flag;
 	unsigned char *data;
 	int data_length;
 
@@ -143,7 +144,7 @@ struct custom_ip
 {
 	char source_ip[IP_ADDR_LEN_STR];
 	char destination_ip[IP_ADDR_LEN_STR];
-	int protocole;
+	int protocol;
 	TCP_Segment tcp_data;
 	UDP_Datagram udp_data;
 	ICMP_Msg icmp_data;
@@ -153,9 +154,9 @@ struct custom_ip
 struct custom_arp
 {
 	int hw_type;
-	int protocole;
+	int proto_layer3;
 	int hw_addr_len;
-	int proto_addr_len;
+	int proto_layer3_addr_len;
 	int operation;
 	u_char source_mac[6];
 	u_char source_proto_addr[4];
@@ -167,7 +168,8 @@ struct custom_ethernet
 {
         char source_mac[ETHER_ADDR_LEN_STR];
         char destination_mac[ETHER_ADDR_LEN_STR];
-        int ethernet_type;
+        char payload_protocol[PAYLOAD_PROTOCOL_LEN_STR];
+        int ethertype;
         int frame_size;
         IP_Packet ip_data;
         ARP_Packet arp_data;
