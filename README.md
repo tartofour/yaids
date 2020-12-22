@@ -86,16 +86,24 @@ Yaids prend en charge deux type d'options :
 ### void print_help(char * prg_name);
 
 Argument : 
-- **char * prg_name** : Nom du programme
+- char * prg_name : Nom du programme
 
 Description : 
 - Affiche le menu d'aide.
-* * *
+
 ### void print_error(char * err_str)
-- Affiche un message d'erreur. Prend en argument la chaine de caractère à afficher.
-* * *
+Argument : 
+- char * err_str: Chaine de caractère à afficher à l'écran
+
+Description :
+- Affiche un message d'erreur.
 
 ### void print_rules(Rule *rules, int count)
+Argument : 
+- Rule *rules : Tableau d'instances rules.
+- int count : Nombre d'instances rules dans le tableau.
+
+Description :
 - Affiche un résumé des règles présentes dans le tableau de règles.
 * * *
 
