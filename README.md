@@ -90,6 +90,7 @@ Argument :
 
 Description : 
 - Affiche le menu d'aide.
+* * *
 
 ### void print_error(char * err_str)
 Argument : 
@@ -97,6 +98,7 @@ Argument :
 
 Description :
 - Affiche un message d'erreur.
+* * *
 
 ### void print_rules(Rule *rules, int count)
 Argument : 
