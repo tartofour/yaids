@@ -239,6 +239,11 @@ int populate_packet_ds(const struct pcap_pkthdr *header, const u_char *packet, E
 			
 			//print_tcp_header(&custom_segment);
 		  	
+			if(custom_frame->ip_data.tcp_data.source_port == 443 || custom_frame->ip_data.tcp_data.destination_port == 443)
+			{
+		 		strcpy(custom_frame->payload_protocol, "https");
+			}
+		  	
 		  	if(strstr((char*)custom_segment.data, "HTTP/1.1") != NULL || strstr((char*)custom_segment.data, "HTTP/1.2") != NULL || strstr((char*)custom_segment.data, "HTTP/2") != NULL)
 			{
 				strcpy(custom_frame->payload_protocol, "http");

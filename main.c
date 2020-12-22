@@ -59,16 +59,6 @@
 #define STR_MAX_SIZE 255
 #define ARGS_MAX_SIZE 255
 
-enum rules_header_fields
-{ 
-	ACTION, 
-	PROTOCOL, 
-	IP_SRC, 
-	PORT_SRC, 
-	IP_DST, 
-	PORT_DST
-};
-
 struct ids_rule
 {
     char action[ACTION_LEN_STR];
@@ -604,14 +594,23 @@ bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 		}
 	}
 	
-	if (strcmp(frame->payload_protocol,"http") == 0 && strcmp(rules_ds->protocol,"http") == 0)
+	if (strcmp(rules_ds->protocol,"http") == 0)
 	{
-		ip_match = is_ip_match(rules_ds->ip_src, frame->ip_data.source_ip) && is_ip_match(rules_ds->ip_dst, frame->ip_data.destination_ip);
-		port_match = is_port_match(rules_ds->port_src, frame->ip_data.tcp_data.source_port) && is_port_match(rules_ds->port_dst, frame->ip_data.tcp_data.destination_port);
-		if(ip_match && port_match)
+		if (strcmp(frame->payload_protocol,"https") == 0)
 		{
-			rule_header_match = true;
-			payload_ptr = frame->ip_data.tcp_data.data;
+			syslog(LOG_DEBUG, "HTTPS Detected, can't afford content check.");
+			return true;
+		}
+		
+		if (strcmp(frame->payload_protocol,"http") == 0) 
+		{
+			ip_match = is_ip_match(rules_ds->ip_src, frame->ip_data.source_ip) && is_ip_match(rules_ds->ip_dst, frame->ip_data.destination_ip);
+			port_match = is_port_match(rules_ds->port_src, frame->ip_data.tcp_data.source_port) && is_port_match(rules_ds->port_dst, frame->ip_data.tcp_data.destination_port);
+			if(ip_match && port_match)
+			{
+				rule_header_match = true;
+				payload_ptr = frame->ip_data.tcp_data.data;
+			}
 		}
 	}	
 	if (strcmp(frame->payload_protocol,"ftp") == 0 && strcmp(rules_ds->protocol,"ftp") == 0)
@@ -674,6 +673,7 @@ bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 	return false;
 }
 
+
 void my_packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 {
 	
@@ -690,11 +690,13 @@ void my_packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_c
 	rules = params->rules_ptr;
 	
 	populate_packet_ds(header, packet, &frame);
+
 	
 	for (i=0; i<rules_total_nb && !frame_match_rules; i++)
 	{
 		frame_match_rules = rules_matcher(&rules[i], &frame);	
 	}
+	
 	//check_syn_flood(struct packet_syn, &frame, header->ts.tv_sec)
 }
 
