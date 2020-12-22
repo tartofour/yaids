@@ -83,11 +83,10 @@ Yaids prend en charge deux type d'options :
 
 # Documentation du code source
 ## main.c
-* * *
 ### void print_help(char * prg_name);
 
 Argument : 
-- char * prg_name : Nom du programme
+- **char * prg_name** : Nom du programme
 
 Description : 
 - Affiche le menu d'aide.
