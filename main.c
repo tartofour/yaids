@@ -134,7 +134,7 @@ void print_help(char * prg_name)
 {
 	char *version = "1.201222";
 	char *authors = "Jonathan Rasque & Benjamin Verjus";
-	char *github_repo = "https://github.com/tartofour/Projet_developpement";
+	char *github_repo = "https://github.com/tartofour/yaids";
 	char *pcap_version = "libpcap version 1.9.1";
 	char *pcre_version = "Using PCRE version: 8.44 2020-02-12";
 	char *zlib_version = "Using ZLIB version: 1.2.11";
@@ -147,7 +147,7 @@ void print_help(char * prg_name)
 	printf("\t\tUsing PCRE version: %s\n", pcre_version);
 	printf("\t\tUsing ZLIB version: %s\n\n", zlib_version);
 	
-	printf("USAGE : %s <rules_file.txt> [interface]\n\n", prg_name);
+	printf("USAGE : %s <rules_file> [interface]\n\n", prg_name);
 	printf("OPTION : -h, display this message\n");
 	printf("\n");
 	
