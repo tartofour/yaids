@@ -596,12 +596,6 @@ bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 	
 	if (strcmp(rules_ds->protocol,"http") == 0)
 	{
-		if (strcmp(frame->payload_protocol,"https") == 0)
-		{
-			syslog(LOG_DEBUG, "HTTPS Detected, can't afford content check.");
-			return true;
-		}
-		
 		if (strcmp(frame->payload_protocol,"http") == 0) 
 		{
 			ip_match = is_ip_match(rules_ds->ip_src, frame->ip_data.source_ip) && is_ip_match(rules_ds->ip_dst, frame->ip_data.destination_ip);
@@ -611,6 +605,11 @@ bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 				rule_header_match = true;
 				payload_ptr = frame->ip_data.tcp_data.data;
 			}
+		}
+		if (strcmp(frame->payload_protocol,"https") == 0)
+		{
+			ip_match = is_ip_match(rules_ds->ip_src, frame->ip_data.source_ip) && is_ip_match(rules_ds->ip_dst, frame->ip_data.destination_ip);
+			rule_header_match = true;
 		}
 	}	
 	if (strcmp(frame->payload_protocol,"ftp") == 0 && strcmp(rules_ds->protocol,"ftp") == 0)
@@ -654,8 +653,15 @@ bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 	}
 		
 	// Option(s) match	
-		
-	if (rule_header_match == true && strlen(rules_ds->content) > 0)
+	
+	if (rule_header_match && strcmp(frame->payload_protocol, "https") == 0)
+	{
+		syslog(LOG_DEBUG, "HTTPS detected, can't afford content check ...");
+		return true;
+	}
+
+	
+	if (rule_header_match && strlen(rules_ds->content) > 0)
 	{
 		if (strstr((char*)payload_ptr, rules_ds->content))
 		{
