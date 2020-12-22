@@ -1,7 +1,7 @@
 <h1 align="center">
-  <a href="https://standardjs.com"><img src="https://cdn.freebiesupply.com/logos/large/2x/c-2975-logo-png-transparent.png" alt="Yaids" width="200"></a>
+  <a href="https://github.com/tartofour/yaids"><img src="https://cdn.freebiesupply.com/logos/large/2x/c-2975-logo-png-transparent.png" alt="Yaids" width="200"></a>
   <br>
-  Yaids (Yet Another IDS)
+  Projet de développement : Yaids (Yet Another IDS)
   <br>
   <br>
 </h1>
@@ -9,15 +9,12 @@
 
 ## Table des Matières
 
-- Introduction
-    - Fonctionnalités
-    - Protocole pris en charge
 - Démarrage rapide
     - [Dépendances](#d%C3%A9pendances)
     - [Installation](#installation)
     - [Utilisation](#utilisation)
-    - [Fichier de règles](#Fichier-de-r%C3%A9gles)
-    - [Désinstallation](#d%C3%A9sinstallation)
+    - [Protocoles pris en charge](#protocoles-pris-en-charge)
+    - [Options de règles](#options-de-règles)
 - Documentation du code source
     - [populate.c](#populate.c)
     - [populate.h](#populate.h)
@@ -68,33 +65,17 @@ Il est également recommandé de spécifier une interface d'écoute :
 # yaids <rules_file> [interface]
 ```
 
-## Fichier de règles
-
-Chaque ligne du fichier `rules.ids` correspond à une règle. Chaque règle définit les caractéristique permettant de la comparer avec une paquet transitant par la carte réseau. 
-La régle définit également le comportement à adopter par `yaids` lorsqu'un paquet match.
-
-
-### Action
-
-Permet de définir quel type d'action sera prise par l'IDS lorsqu'une trame ethernet matche avec la règle. Actuellement, `yaids` prend uniquement en charge l'action `alert`.
-
-### Protocole
+## Protocoles pris en charge
 
 Permet de définir le protocole sur lequel s'applique la règle. `yaids` prend en charge les protocoles suivants:
+- `TCP`
+- `UDP`
+- `ICMP`
+- `HTTP`
+- `FTP`
+- `SSH`
 
-|  Protocole   |  Méthode de détection du type de payload  |
-| --- | --- |
-| tcp |  En fonction du protocole indiqué dans le champ `protocole` de l'entête IP.   |
-| udp |  Idem  |
-| icmp | Idem   |
-| ftp | En fonction d'une signature dans le payload TCP  |
-| http | Idem  |
-| ssh |  Idem  |
-
-### Filtrage par IP et ports
-Pour ... un filtrage en fonction de l'ip ou du port. yaids prend en charge le mot-clé any.
-
-### Options de règle
+## Options de règles
 Yaids prend en charge deux type d'options :
 - `content` qui permet de rechercher une chaine de caractère dans le payload d'un paquet.
 - `msg` qui permet de définir la chaine de caractère à écrire dans le journal du système lors d'un match. 
