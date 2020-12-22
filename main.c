@@ -61,18 +61,18 @@
 
 struct ids_rule
 {
-    char action[ACTION_LEN_STR];
-    char protocol[PROTOCOL_LEN_STR];
-    char ip_src[IP_ADDR_LEN_STR];
-    int port_src;
-    char direction[DIRECTION_LEN_STR];
-    char ip_dst[IP_ADDR_LEN_STR];
-    int port_dst;
-    char content[STR_MAX_SIZE];
-    char msg[STR_MAX_SIZE];
+	char action[ACTION_LEN_STR];
+	char protocol[PROTOCOL_LEN_STR];
+	char ip_src[IP_ADDR_LEN_STR];
+	int port_src;
+	char direction[DIRECTION_LEN_STR];
+	char ip_dst[IP_ADDR_LEN_STR];
+	int port_dst;
+	char content[STR_MAX_SIZE];
+	char msg[STR_MAX_SIZE];
    // int count;
    // time_t seconds;
-    
+	
 } typedef Rule;
 
 struct http_message
@@ -107,50 +107,64 @@ int check_syn_flood(struct packet_syn, ETHER_Frame *frame, time_t capture_time)
 /*
 int gzip_inflate(char *compr, int comprLen, char *uncompr, int uncomprLen)
 {
-    int err;
-    z_stream d_stream; // decompression stream 
+	int err;
+	z_stream d_stream; // decompression stream 
 
-    d_stream.zalloc = (alloc_func)0;
-    d_stream.zfree = (free_func)0;
-    d_stream.opaque = (voidpf)0;
+	d_stream.zalloc = (alloc_func)0;
+	d_stream.zfree = (free_func)0;
+	d_stream.opaque = (voidpf)0;
 
-    d_stream.next_in  = (unsigned char *)compr;
-    d_stream.avail_in = comprLen;
+	d_stream.next_in  = (unsigned char *)compr;
+	d_stream.avail_in = comprLen;
 
-    d_stream.next_out = (unsigned char *)uncompr;
-    d_stream.avail_out = uncomprLen;
+	d_stream.next_out = (unsigned char *)uncompr;
+	d_stream.avail_out = uncomprLen;
 
-    err = inflateInit2(&d_stream, 16+MAX_WBITS);
-    if (err != Z_OK) return err;
+	err = inflateInit2(&d_stream, 16+MAX_WBITS);
+	if (err != Z_OK) return err;
 
-    while (err != Z_STREAM_END) err = inflate(&d_stream, Z_NO_FLUSH);
+	while (err != Z_STREAM_END) err = inflate(&d_stream, Z_NO_FLUSH);
 
-    err = inflateEnd(&d_stream);
-    return err;
+	err = inflateEnd(&d_stream);
+	return err;
 }
 */
 
 void print_help(char * prg_name)
 {
-    printf("Utilisation : ");
-    printf("%s rules_file [interface]\n", prg_name);
-    printf("Écoute le traffic sur une interface réseau et ajoute une entrée dans syslog lors de la détection d'une activité dont la signature correspond avec une ou plusieurs règles définies dans le ficher rules_file.\n");
-    printf("\t-h,           affiche ce message\n");
+	char *version = "1.201222";
+	char *authors = "Jonathan Rasque & Benjamin Verjus";
+	char *github_repo = "https://github.com/tartofour/Projet_developpement";
+	char *pcap_version = "libpcap version 1.9.1";
+	char *pcre_version = "Using PCRE version: 8.44 2020-02-12";
+	char *zlib_version = "Using ZLIB version: 1.2.11";
+	
+	printf("\n   .-. \t\t-*> Yaids! <*-\n");
+	printf("  (o o)\t\tVersion %s\n", version);
+	printf("  | O \\\t\tBy %s\n", authors);
+	printf("   \\   \\ \tGithub : %s\n", github_repo);
+	printf("    `~~~' \tUsing libpcap version: %s\n", pcap_version);
+	printf("\t\tUsing PCRE version: %s\n", pcre_version);
+	printf("\t\tUsing ZLIB version: %s\n\n", zlib_version);
+	
+	printf("USAGE : %s <rules_file.txt> [interface]\n\n", prg_name);
+	printf("OPTION : -h, display this message\n");
+	printf("\n");
+	
 }
 
 void print_error(char * err_str)
 {
-    fprintf(stderr, "Erreur : %s\n", err_str);
-    fprintf(stderr, "Pour le menu d'aide utilisez l'option -h\n");
+	fprintf(stderr, "Erreur : %s\n", err_str);
 }
 
 void print_rules(Rule *rules, int count)
 {
-    int i;
-    
-    for (i=0; i<count; i++)
-    {
-        printf("Rules n°%d\n", i);
+	int i;
+	
+	for (i=0; i<count; i++)
+	{
+		printf("Rules n°%d\n", i);
 		printf("Action : %s\n", rules[i].action);
 		printf("Protocol : %s\n", rules[i].protocol);
 		printf("Source IP : %s\n", rules[i].ip_src);
@@ -167,7 +181,7 @@ void print_rules(Rule *rules, int count)
 			printf("Content : %s\n", rules[i].content);
 		}		
 		printf("\n");
-    }
+	}
 }
 
 void initialize_http_message_struct(Http_msg message)
@@ -217,11 +231,11 @@ void remove_char_from_str(char *new_str, char *str, char char_to_remove)
 
 bool is_action_in_rules_valid(char *action_str)
 {
-    if(strcmp(action_str, "alert") == 0)
-    {   
-        return true;
-    }   
-    return false;
+	if(strcmp(action_str, "alert") == 0)
+	{   
+		return true;
+	}   
+	return false;
 }
 
 bool is_protocol_in_rules_valid(char *protocol)
@@ -318,48 +332,48 @@ bool is_port_match(int rule_port, int capture_port)
 
 void check_interface_validity(char *choosen_interface_name)
 {
-    struct ifaddrs *ifa, *ifa_tmp;
+	struct ifaddrs *ifa, *ifa_tmp;
 
-    if (getifaddrs(&ifa) == -1)
-    {
-        print_error("aucun interface détecté sur la machine");
-        exit(EXIT_FAILURE);
-    }
+	if (getifaddrs(&ifa) == -1)
+	{
+		print_error("aucun interface détecté sur la machine");
+		exit(EXIT_FAILURE);
+	}
 
-    for (ifa_tmp = ifa; ifa_tmp; ifa_tmp = ifa_tmp->ifa_next)
-    {
-        if (strcmp(ifa_tmp->ifa_name,choosen_interface_name) == 0 && \
-            ifa_tmp->ifa_addr->sa_family==AF_INET)
-        {
-            freeifaddrs(ifa);
-            return;
-        }
-    }
-    print_error("interface non trouvé sur la machine");
-    exit(EXIT_FAILURE);
+	for (ifa_tmp = ifa; ifa_tmp; ifa_tmp = ifa_tmp->ifa_next)
+	{
+		if (strcmp(ifa_tmp->ifa_name,choosen_interface_name) == 0 && \
+			ifa_tmp->ifa_addr->sa_family==AF_INET)
+		{
+			freeifaddrs(ifa);
+			return;
+		}
+	}
+	print_error("interface non trouvé sur la machine");
+	exit(EXIT_FAILURE);
 }
 
 int check_args_validity(int argc, char * argv[])
 {
-    if (argc == 1)
-    {
-       print_help(argv[0]);
-       exit(EXIT_SUCCESS);
-    }
+	if (argc == 1)
+	{
+	   print_help(argv[0]);
+	   exit(EXIT_SUCCESS);
+	}
 
-    if (strcmp(argv[1], "-h") == 0)
-    {
-       print_help(argv[0]);
-       exit(EXIT_SUCCESS);
-    }
+	if (strcmp(argv[1], "-h") == 0)
+	{
+	   print_help(argv[0]);
+	   exit(EXIT_SUCCESS);
+	}
 
-    if (argc < 2 || argc > 3)
-    {
-        print_error("nombre d'arguments invalides");
-        exit(EXIT_FAILURE);
-    }
-    
-    if (argc == 2)
+	if (argc < 2 || argc > 3)
+	{
+		print_error("nombre d'arguments invalides");
+		exit(EXIT_FAILURE);
+	}
+	
+	if (argc == 2)
 	{
 		if (strlen(argv[1]+1) > ARGS_MAX_SIZE)
 		{
@@ -367,7 +381,7 @@ int check_args_validity(int argc, char * argv[])
 			exit(EXIT_FAILURE);
 		}
 	}
-    
+	
 	if (argc == 3)
 	{
 		if (strlen(argv[1]+1) > ARGS_MAX_SIZE || strlen(argv[2]+1) > ARGS_MAX_SIZE)
@@ -379,7 +393,7 @@ int check_args_validity(int argc, char * argv[])
 	}
 
  
-    return 0;
+	return 0;
 }
 
 void assign_default_interface(char *device)
@@ -388,12 +402,12 @@ void assign_default_interface(char *device)
 	char error[PCAP_ERRBUF_SIZE];
 	
 	if(pcap_findalldevs(&interfaces,error)==-1)
-    {
+	{
 		print_error("Aucun interface détecté sur la machine");
-        exit(EXIT_FAILURE);   
-    }
+		exit(EXIT_FAILURE);   
+	}
 
-    strcpy(device, interfaces->name);
+	strcpy(device, interfaces->name);
 }
 
 void assign_interface(int argc, char *argv[], char *device)
@@ -402,7 +416,7 @@ void assign_interface(int argc, char *argv[], char *device)
 	{
 		assign_default_interface(device);
 	}
-    
+	
 	if (argc == 3)
 	{
 		check_interface_validity(argv[2]);
@@ -412,28 +426,28 @@ void assign_interface(int argc, char *argv[], char *device)
 
 int count_file_lines(FILE* file)
 {
-    int count_lines = 0;
-    char character = getc(file);
+	int count_lines = 0;
+	char character = getc(file);
 
-    while (character != EOF)
-    {
-        if (character == '\n')
-        {
-            count_lines++;
-        }
-        character = getc(file);
-    }
-    rewind(file);
-    return count_lines;
+	while (character != EOF)
+	{
+		if (character == '\n')
+		{
+			count_lines++;
+		}
+		character = getc(file);
+	}
+	rewind(file);
+	return count_lines;
 }
 
 Rule* rules_malloc(int count)
 {
-    Rule* ptr = (Rule *) malloc(sizeof(Rule) * count);
-    int i;
-    
-    for(i=0; i<count; i++)
-    {
+	Rule* ptr = (Rule *) malloc(sizeof(Rule) * count);
+	int i;
+	
+	for(i=0; i<count; i++)
+	{
 		memset(ptr->action, 0, ACTION_LEN_STR);
 		memset(ptr->protocol, 0, PROTOCOL_LEN_STR);
 		memset(ptr->ip_src, 0, IP_ADDR_LEN_STR);
@@ -445,29 +459,29 @@ Rule* rules_malloc(int count)
 		ptr->port_dst = -1;
 	}
 	
-    return ptr;
+	return ptr;
 }
 
 int populate_rule_header(char *line, Rule *rule_ds)
 {
 	char *saveptr = NULL;
-    char *action_ptr = NULL;
-    char *protocol_ptr = NULL;
-    char *ip_src_ptr = NULL;
-    char *port_src_ptr = NULL;
-    char *direction_ptr = NULL;
-    char *ip_dst_ptr = NULL;
-    char *port_dst_ptr = NULL;
-    char *error_ptr = NULL;
-    
-    action_ptr = strtok_r(line, " ", &saveptr);
-    protocol_ptr = strtok_r(NULL, " ", &saveptr);
-    ip_src_ptr = strtok_r(NULL, " ", &saveptr);
-    port_src_ptr = strtok_r(NULL, " ", &saveptr);
-    direction_ptr = strtok_r(NULL, " ", &saveptr);
-    ip_dst_ptr = strtok_r(NULL, " ", &saveptr);
-    port_dst_ptr = strtok_r(NULL, " ", &saveptr);
-    error_ptr = strtok_r(NULL, " ", &saveptr);
+	char *action_ptr = NULL;
+	char *protocol_ptr = NULL;
+	char *ip_src_ptr = NULL;
+	char *port_src_ptr = NULL;
+	char *direction_ptr = NULL;
+	char *ip_dst_ptr = NULL;
+	char *port_dst_ptr = NULL;
+	char *error_ptr = NULL;
+	
+	action_ptr = strtok_r(line, " ", &saveptr);
+	protocol_ptr = strtok_r(NULL, " ", &saveptr);
+	ip_src_ptr = strtok_r(NULL, " ", &saveptr);
+	port_src_ptr = strtok_r(NULL, " ", &saveptr);
+	direction_ptr = strtok_r(NULL, " ", &saveptr);
+	ip_dst_ptr = strtok_r(NULL, " ", &saveptr);
+	port_dst_ptr = strtok_r(NULL, " ", &saveptr);
+	error_ptr = strtok_r(NULL, " ", &saveptr);
 
 	if (error_ptr != NULL || action_ptr == NULL || protocol_ptr == NULL || ip_src_ptr == NULL || port_src_ptr == NULL || direction_ptr == NULL || ip_dst_ptr == NULL || port_dst_ptr == NULL)
 	{
@@ -493,7 +507,7 @@ int populate_rule_header(char *line, Rule *rule_ds)
 	rule_ds->port_src = atoi(port_src_ptr);
 	rule_ds->port_dst = atoi(port_dst_ptr);
 		
-     return 0;
+	 return 0;
 }
 
 int populate_rule_option(char *line, Rule *rule_ds)
@@ -502,10 +516,10 @@ int populate_rule_option(char *line, Rule *rule_ds)
 	char value_buffer[1000];
 	char *options_ptr = NULL;
 	char *option_ptr = NULL;
-    char *value_ptr = NULL;
-    char *options_save_ptr = NULL;
-    char *option_save_ptr = NULL;
-    
+	char *value_ptr = NULL;
+	char *options_save_ptr = NULL;
+	char *option_save_ptr = NULL;
+	
 	options_ptr = strtok_r(line, ";", &options_save_ptr);
 	
 	while(options_ptr != NULL)
@@ -543,35 +557,35 @@ int read_rules(FILE *rules_file, Rule *rules_ds, int count)
 {
 	int line_nb;
 	int header_correctly_populate = -1;
-    int option_correctly_populate = -1;
-    char *option_ptr = NULL;
-    char *header_ptr = NULL;
+	int option_correctly_populate = -1;
+	char *option_ptr = NULL;
+	char *header_ptr = NULL;
 	char *saveptr = NULL;
-    char *rule_line = NULL;
-    size_t rule_line_len = 0;
+	char *rule_line = NULL;
+	size_t rule_line_len = 0;
 
-    for(line_nb=0; line_nb<count; line_nb++)
-    {
-        getline(&rule_line, &rule_line_len, rules_file);
-        
-        header_ptr = strtok_r(rule_line, "(", &saveptr);
-        option_ptr = strtok_r(NULL, ")", &saveptr);
+	for(line_nb=0; line_nb<count; line_nb++)
+	{
+		getline(&rule_line, &rule_line_len, rules_file);
+		
+		header_ptr = strtok_r(rule_line, "(", &saveptr);
+		option_ptr = strtok_r(NULL, ")", &saveptr);
 
-        if (header_ptr == NULL || option_ptr == NULL)
-        {
-			return line_nb+1;
-		}
-        
-        header_correctly_populate = populate_rule_header(header_ptr, &rules_ds[line_nb]);
-        option_correctly_populate = populate_rule_option(option_ptr, &rules_ds[line_nb]);
-         
-        if (header_correctly_populate != 0 || option_correctly_populate != 0)
-        {
+		if (header_ptr == NULL || option_ptr == NULL)
+		{
 			return line_nb+1;
 		}
 		
-    }
-    return 0;
+		header_correctly_populate = populate_rule_header(header_ptr, &rules_ds[line_nb]);
+		option_correctly_populate = populate_rule_option(option_ptr, &rules_ds[line_nb]);
+		 
+		if (header_correctly_populate != 0 || option_correctly_populate != 0)
+		{
+			return line_nb+1;
+		}
+		
+	}
+	return 0;
 }
 
 bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
@@ -709,50 +723,50 @@ void my_packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_c
 int main(int argc, char *argv[])
 {
 
-    FILE *rules_file;
-    Rule *rules;
-    pcap_t * handle;
-    
-    char device[STR_MAX_SIZE];
-    char err_msg[STR_MAX_SIZE];
-    char error_buffer[PCAP_ERRBUF_SIZE];
+	FILE *rules_file;
+	Rule *rules;
+	pcap_t * handle;
+	
+	char device[STR_MAX_SIZE];
+	char err_msg[STR_MAX_SIZE];
+	char error_buffer[PCAP_ERRBUF_SIZE];
 
-    int rules_file_lines_count = 0;
-    int error_in_line = -1;
-    
-    check_args_validity(argc, argv);
-    assign_interface(argc, argv, device);
+	int rules_file_lines_count = 0;
+	int error_in_line = -1;
+	
+	check_args_validity(argc, argv);
+	assign_interface(argc, argv, device);
 	printf("Interface sélectionné : %s\n", device);
 	
-    rules_file = fopen(argv[1], "r");
+	rules_file = fopen(argv[1], "r");
 	if(rules_file == NULL)
-    {
-        print_error("le fichier rules n'existe pas");
-        exit(EXIT_FAILURE);
-    }
-    
-    rules_file_lines_count = count_file_lines(rules_file);
-    rules = rules_malloc(rules_file_lines_count);
-    printf("Nb de ligne dans le fichier %s : %d\n", argv[1], rules_file_lines_count);
+	{
+		print_error("le fichier rules n'existe pas");
+		exit(EXIT_FAILURE);
+	}
+	
+	rules_file_lines_count = count_file_lines(rules_file);
+	rules = rules_malloc(rules_file_lines_count);
+	printf("Nb de ligne dans le fichier %s : %d\n", argv[1], rules_file_lines_count);
 
-    error_in_line = read_rules(rules_file, rules, rules_file_lines_count);
-    if (error_in_line != 0)
-    {
-        sprintf(err_msg, "Erreur de configuration dans le fichier rules ligne %d", error_in_line);
-        print_error(err_msg);
-        exit(EXIT_FAILURE);
-    }
-    
-    fclose(rules_file);
+	error_in_line = read_rules(rules_file, rules, rules_file_lines_count);
+	if (error_in_line != 0)
+	{
+		sprintf(err_msg, "Erreur de configuration dans le fichier rules ligne %d", error_in_line);
+		print_error(err_msg);
+		exit(EXIT_FAILURE);
+	}
+	
+	fclose(rules_file);
 	print_rules(rules, rules_file_lines_count);
 
 	handle = pcap_create(device, error_buffer);
-    pcap_set_timeout(handle,10);
-    pcap_activate(handle);
-    int total_packet_count = -1;
-    Pcap_args args = {rules_file_lines_count, rules};
-    
-    pcap_loop(handle, total_packet_count, (pcap_handler) my_packet_handler, (u_char *) &args); // doit aussi prendre le tableau de structure RULES
+	pcap_set_timeout(handle,10);
+	pcap_activate(handle);
+	int total_packet_count = -1;
+	Pcap_args args = {rules_file_lines_count, rules};
+	
+	pcap_loop(handle, total_packet_count, (pcap_handler) my_packet_handler, (u_char *) &args); // doit aussi prendre le tableau de structure RULES
 	free(rules);
-    return EXIT_SUCCESS;
+	return EXIT_SUCCESS;
 }
