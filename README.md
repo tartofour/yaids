@@ -84,27 +84,27 @@ Yaids prend en charge deux type d'options :
 # Documentation du code source
 ## main.c
 * * *
-#### void print_help(char * prg_name);
+### void print_help(char * prg_name);
 
-**Argument** : 
+Argument : 
 - char * prg_name : Nom du programme
 
-**Description** : 
+Description : 
 - Affiche le menu d'aide.
 * * *
 ### void print_error(char * err_str)
 - Affiche un message d'erreur. Prend en argument la chaine de caractère à afficher.
 * * *
 
-#### void print_rules(Rule *rules, int count)
+### void print_rules(Rule *rules, int count)
 - Affiche un résumé des règles présentes dans le tableau de règles.
 * * *
 
-#### void remove_char_from_str(char *new_str, char *str, char char_to_remove)
+### void remove_char_from_str(char *new_str, char *str, char char_to_remove)
 - Copie une chaine de caractère en retirant le caractère entré en paramètre.
 * * *
 
-#### bool is_action_in_rule_valid(char *action_str)
+### bool is_action_in_rule_valid(char *action_str)
 - Vérifie la validité de la valeur présente dans le champ `action` pour une règle.
 * * *
 
