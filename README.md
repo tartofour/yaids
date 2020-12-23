@@ -17,6 +17,36 @@
     - [Options de règles](#options-de-règles)
 - Documentation du code source
     - [main.c](#main.c)
+    	- Includes
+    	- Structures
+    		- [struct ids_rule](#test)
+			- [struct pcap_arguments](#test)
+		- Fonctions
+			- [void print_help(char * prg_name);](#test)
+			- [void print_error(char * err_str);](#test)
+			- [void print_rules(Rule *rules, int count);](#test)
+			- [void initialize_http_message_struct(Http_msg message);](#test)
+			- [void remove_char_from_str(char *new_str, char *str, char char_to_remove);](#test)
+			- [bool is_action_in_rules_valid(char *action_str);](#test)
+			- [bool is_protocol_in_rules_valid(char *protocol);](#test)
+			- [bool is_ip_in_rules_valid(char *ip);](#test)
+			- [bool is_port_in_rules_valid(char *port);](#test)
+			- [bool is_direction_in_rules_valid(char *direction);](#test)
+			- [bool is_ip_match(char* rules_ip, char* captured_ip);](#test)
+			- [bool is_port_match(int rule_port, int capture_port);](#test)
+			- [void check_interface_validity(char *choosen_interface_name);](#test)
+			- [int check_args_validity(int argc, char * argv[]);](#test)
+			- [void assign_default_interface(char *device);](#test)
+			- [void assign_interface(int argc, char *argv[], char *device);](#test)
+			- [int count_file_lines(FILE* file);](#test)
+			- [Rule* rules_malloc(int count);](#test)
+			- [int populate_rule_header(char *line, Rule *rule_ds);](#test)
+			- [int populate_rule_option(char *line, Rule *rule_ds);](#test)
+			- [int read_rules(FILE *rules_file, Rule *rules_ds, int count);](#test)
+			- [bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame);](#test)
+			- [void my_packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_char *packet);](#test)
+			- [int main(int argc, char *argv[]);](#test)
+
     - [populate.c](#populate.c)
     - [populate.h](#populate.h)
     
@@ -83,7 +113,53 @@ Yaids prend en charge deux type d'options :
 
 # Documentation du code source
 ## main.c
-### Fonctions
+
+
+### Structures
+
+#### struct ids_rule
+
+```
+struct ids_rule
+{
+	char action[ACTION_LEN_STR];
+	char protocol[PROTOCOL_LEN_STR];
+	char ip_src[IP_ADDR_LEN_STR];
+	int port_src;
+	char direction[DIRECTION_LEN_STR];
+	char ip_dst[IP_ADDR_LEN_STR];
+	int port_dst;
+	char content[STR_MAX_SIZE];
+	char msg[STR_MAX_SIZE];
+	
+} typedef Rule; 
+```
+
+Description : 
+- Cette structure permet de stocker les différentes règles qui seront comparées aux paquets capturés par libpcap.
+
+* * *
+
+#### struct pcap_arguments
+
+```
+struct pcap_arguments
+{
+	int rules_counter;
+	Rule *rules_ptr;
+	
+} typedef Pcap_args;
+```
+
+Description : 
+- Cette structure permet de stocker des arguments supplémentaires à envoyer à my_packet_handler lors de l'appel à la fonction `pcap_loop`.
+Pour faire fonctionner `my_packet_handler` correctement, nous avions besoin de lui fournir deux arguments supplémentaires depuis notre fonction main, à savoir un pointeur vers le tableau d'instance Rule et le nombre total de règles.
+La fonction `pcap_loop` ne peut cependant prendre qu'un seul argument personnalisé.
+Pour permettre d'envoyer les deux paramètres, nous avons décidé de créer une structure et d'utiliser cette structure comme argument.
+
+* * * 
+
+### Prototypes des fonctions
 
 * * * 
 
@@ -96,7 +172,7 @@ Argument :
 - char * prg_name : Nom du programme
 * * *
 
-#### void print_error(char * err_str)
+#### void print_error(char * err_str);
 
 Description :
 - Affiche un message d'erreur.
@@ -105,7 +181,7 @@ Argument :
 - char * err_str: Chaine de caractère à afficher à l'écran
 * * *
 
-#### void print_rules(Rule *rules, int count)
+#### void print_rules(Rule *rules, int count);
 
 Description :
 - Affiche un résumé des règles présentes dans le tableau de règles.
@@ -116,7 +192,7 @@ Argument :
 
 * * *
 
-#### void remove_char_from_str(char *new_str, char *str, char char_to_remove)
+#### void remove_char_from_str(char *new_str, char *str, char char_to_remove);
 
 Description :
 - Copie une chaine de caractère en retirant le caractère entré en paramètre.
@@ -128,7 +204,7 @@ Arguments :
 
 * * *
 
-#### bool is_action_in_rule_valid(char *action)
+#### bool is_action_in_rule_valid(char *action);
 Description :
 
 - Vérifie la validité de la valeur présente dans le champ `action` d'une ligne extraite du fichier de règle.
@@ -138,7 +214,7 @@ Argument :
 
 * * *
 
-#### bool is_protocol_in_rules_valid(char *protocol)
+#### bool is_protocol_in_rules_valid(char *protocol);
 
 Description :
 - Vérifie la validité de la valeur présente dans le champ `protocole` d'une ligne extraite du fichier de règle.
@@ -148,7 +224,7 @@ Argument :
 
 * * *
 
-#### bool is_ip_in_rules_valid(char *ip)
+#### bool is_ip_in_rules_valid(char *ip);
 
 Description :
 - Vérifie la validité de la valeur présente dans un des champs `ip` d'une ligne extraite du fichier de règle.
@@ -157,7 +233,7 @@ Argument :
 - char *ip : Chaine de caractère à analyser.
 * * *
 
-#### bool is_port_in_rules_valid(char *port)
+#### bool is_port_in_rules_valid(char *port);
 
 Description :
 - Vérifie la validité de la valeur présente dans un des champs `port` d'une ligne extraite du fichier de règle.
@@ -167,7 +243,7 @@ Argument :
 
 * * *
 
-#### bool is_direction_in_rules_valid(char *direction)
+#### bool is_direction_in_rules_valid(char *direction);
 
 Description :
 - Vérifie la validité de la valeur présente dans le champ `direction` d'une ligne extraite du fichier de règle.
@@ -177,7 +253,7 @@ Argument :
 
 * * *
 
-#### bool is_ip_match(char* rules_ip, char* captured_ip)
+#### bool is_ip_match(char* rules_ip, char* captured_ip);
 
 Description :
 - Compare une ip contenue dans une structure règle avec l'ip fournie en paramètre. 
@@ -188,7 +264,7 @@ Argument :
 
 * * *
 
-#### bool is_port_match(int rule_port, int capture_port)
+#### bool is_port_match(int rule_port, int capture_port);
 
 Description :
 - Compare un port contenu dans une structure règle avec le port fourni en paramètre. Retourne vrai si les ports correspondent. 
@@ -199,7 +275,7 @@ Argument :
 
 * * * 
 
-#### void check_interface_validity(char *choosen_interface_name)
+#### void check_interface_validity(char *choosen_interface_name);
 
 Description :
 - Vérifier que l'interface inséré en paramètre est bien présent sur la machine. 
@@ -209,7 +285,7 @@ Argument :
 
 * * * 
 
-#### int check_args_validity(int argc, char * argv[])
+#### int check_args_validity(int argc, char * argv[]);
 
 Description :
 - Vérifier que les arguments entrés par l'utilisateur lors de l'execution du programme sont valides. 
@@ -220,7 +296,7 @@ Argument :
 
 * * * 
 
-#### void assign_default_interface(char *device)
+#### void assign_default_interface(char *device);
 
 Description :
 - Assigne l'interface réseau par défaut.
@@ -230,7 +306,7 @@ Argument :
 
 * * * 
 
-#### void assign_interface(int argc, char *argv[], char *device)
+#### void assign_interface(int argc, char *argv[], char *device);
 
 Description :
 - Si aucun interface n'a été séléctionné par l'utilisateur, cette fonction assigne l'interface réseau par défaut. Si un interface à été séléctionné par l'utilisateur, elle vérifie que cette interface est valide en appelant la fonction check_interface_validity() avant de l'assigner.
@@ -242,7 +318,7 @@ Argument :
 
 * * * 
 
-#### Rule* rules_malloc(int count)
+#### Rule* rules_malloc(int count);
 
 Description :
 - Réserve en mémoire l'espace nécessaire afin de stocker les différentes structures de règle. Initialise également ces structures.
@@ -252,7 +328,7 @@ Argument :
 
 * * * 
 
-#### int populate_rule_header(char *line, Rule *rule_ds)
+#### int populate_rule_header(char *line, Rule *rule_ds);
 
 Description :
 - Divise une ligne du fichier de règle et remplit les champs d'entête d'une struture Rule avec les valeurs obtenues. La fonction vérifie que ces données soient bien valides avec de peupler la structure.
@@ -263,7 +339,7 @@ Arguments :
 
 * * * 
 
-#### int populate_rule_option(char *line, Rule *rule_ds)
+#### int populate_rule_option(char *line, Rule *rule_ds);
 
 Description :
 - Divise une ligne du fichier de règle et remplit les champs d'option d'une struture Rule avec les valeurs obtenues. La fonction vérifie que ces données soient valides avec de peupler la structure.
@@ -274,7 +350,7 @@ Arguments :
 
 * * * 
 
-#### int read_rules(FILE *rules_file, Rule *rules_ds, int count)
+#### int read_rules(FILE *rules_file, Rule *rules_ds, int count);
 
 Description :
 - Parcours chaques lignes du fichier de régles et appel les fonctions `populate_rule_header()` et `populate_rule_option()` afin de peupler la structure Rule.
@@ -286,7 +362,7 @@ Arguments :
 
 * * * 
 
-#### bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
+#### bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame);
 
 Description :
 - Effectue la comparaison entre UNE règle et une trame ethernet.
@@ -297,7 +373,7 @@ Arguments :
 
 * * * 
 
-#### void my_packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
+#### void my_packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_char *packet);
 
 Description :
 - Fonction de callback systématiquement appelée lors de la capture d'une nouvelle trame par la fonction `pcap_loop`.
@@ -308,7 +384,7 @@ Arguments :
 
 * * * 
 
-#### int main(int argc, char *argv[])
+#### int main(int argc, char *argv[]);
 Description : 
 - Fonction principalement permettant :
 	- dddddd
@@ -327,7 +403,7 @@ Arguments :
 
 * * *
 
-#### void print_payload(int payload_length, unsigned char *payload)
+#### void print_payload(int payload_length, unsigned char *payload);
 
 Description :
 - Permet d'afficher le contenu du payload d'un packet.
@@ -338,7 +414,7 @@ Arguments :
 
 * * * 
 
-#### void print_ethernet_header(ETHER_Frame *frame)
+#### void print_ethernet_header(ETHER_Frame *frame);
 
 Description :
 - Permet d'afficher le contenu d'un entête ethernet.
@@ -348,7 +424,7 @@ Arguments :
 
 * * * 
 
-#### void print_ip_header(IP_Packet *packet)
+#### void print_ip_header(IP_Packet *packet);
 
 Description :
 - Permet d'afficher le contenu d'un entête ip.
@@ -358,7 +434,7 @@ Arguments :
 
 * * * 
 
-#### void print_tcp_header(TCP_Segment *segment)
+#### void print_tcp_header(TCP_Segment *segment);
 
 Description :
 - Permet d'afficher le contenu d'un entête TCP.
@@ -368,7 +444,7 @@ Arguments :
 
 * * * 
 
-#### void print_udp_header(UDP_Datagram *datagram)
+#### void print_udp_header(UDP_Datagram *datagram);
 
 Description :
 - Permet d'afficher le contenu d'un entête UDP.
