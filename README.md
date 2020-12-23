@@ -85,55 +85,169 @@ Yaids prend en charge deux type d'options :
 ## main.c
 ### void print_help(char * prg_name);
 
-Argument : 
-- char * prg_name : Nom du programme
-
 Description : 
 - Affiche le menu d'aide.
+
+Argument : 
+- char * prg_name : Nom du programme
 * * *
 
 ### void print_error(char * err_str)
-Argument : 
-- char * err_str: Chaine de caractère à afficher à l'écran
 
 Description :
 - Affiche un message d'erreur.
+
+Argument : 
+- char * err_str: Chaine de caractère à afficher à l'écran
 * * *
 
 ### void print_rules(Rule *rules, int count)
+
+Description :
+- Affiche un résumé des règles présentes dans le tableau de règles.
+
 Argument : 
 - Rule *rules : Tableau d'instances rules.
 - int count : Nombre d'instances rules dans le tableau.
 
-Description :
-- Affiche un résumé des règles présentes dans le tableau de règles.
 * * *
 
 ### void remove_char_from_str(char *new_str, char *str, char char_to_remove)
+
+Description :
 - Copie une chaine de caractère en retirant le caractère entré en paramètre.
+
+Arguments : 
+- char *new_str : Nouvelle chaine de caractère à remplir.
+- char *str : Chaine de caractère à parcourir.
+- char char_to_remove : Caractère à supprimer.
+
 * * *
 
-### bool is_action_in_rule_valid(char *action_str)
-- Vérifie la validité de la valeur présente dans le champ `action` pour une règle.
+### bool is_action_in_rule_valid(char *action)
+Description :
+
+- Vérifie la validité de la valeur présente dans le champ `action` d'une ligne extraite du fichier de règle.
+
+Argument : 
+- char *action : Chaine de caractère à analyser.
+
 * * *
 
 #### bool is_protocol_in_rules_valid(char *protocol)
-- Vérifie la validité de la valeur présente dans le champ `protocole` d'une règle.
+
+Description :
+- Vérifie la validité de la valeur présente dans le champ `protocole` d'une ligne extraite du fichier de règle.
+
+Argument : 
+- char *protocol : Chaine de caractère à analyser
+
 * * *
 
 #### bool is_ip_in_rules_valid(char *ip)
-- Vérifie la validité de la valeur présente dans le champs `ip` d'une règle.
+
+Description :
+- Vérifie la validité de la valeur présente dans un des champs `ip` d'une ligne extraite du fichier de règle.
+
+Argument : 
+- char *ip : Chaine de caractère à analyser.
 * * *
 
 ### bool is_port_in_rules_valid(char *port)
-- Vérifie la validité de la valeur présente dans le champ `port` d'une règle.
+
+Description :
+- Vérifie la validité de la valeur présente dans un des champs `port` d'une ligne extraite du fichier de règle.
+
+Argument : 
+- char *port : Chaine de caractère à analyser
+
 * * *
 
 ### bool is_direction_in_rules_valid(char *direction)
-- Vérifie la validité de la valeur présente dans le champ `direction` d'une règle.
+
+Description :
+- Vérifie la validité de la valeur présente dans le champ `direction` d'une ligne extraite du fichier de règle.
+
+Argument : 
+- char *direction : Chaine de caractère à analyser.
+
 * * *
 
+### bool is_ip_match(char* rules_ip, char* captured_ip)
 
+Description :
+- Compare une ip contenue dans une structure règle avec l'ip fournie en paramètre. 
+
+Argument : 
+- char* rules_ip : IP source ou destination stockée dans une structure règle.
+- char* captured_ip : IP à comparer.
+
+* * *
+
+### bool is_port_match(int rule_port, int capture_port)
+
+Description :
+- Compare un port contenu dans une structure règle avec le port fourni en paramètre. Retourne vrai si les ports correspondent. 
+
+Argument : 
+- char* rules_port : Port source ou destination stocké dans une structure règle.
+- int captured_port : Port à comparer.
+
+* * * 
+
+### void check_interface_validity(char *choosen_interface_name)
+
+Description :
+- Vérifier que l'interface inséré en paramètre est bien présent sur la machine. 
+
+Argument : 
+- char* char *choosen_interface_name : Nom de l'interface à vérifier.
+
+* * * 
+
+### int check_args_validity(int argc, char * argv[])
+
+Description :
+- Vérifier que les arguments entrés par l'utilisateur lors de l'execution du programme sont valides. 
+
+Argument : 
+- int argc : Nombre d'arguments.
+- char * argv[] : Tableau chaine de caractère contenant les arguments.
+
+* * * 
+
+### void assign_default_interface(char *device)
+
+Description :
+- Assigne l'interface réseau par défaut.
+
+Argument : 
+- char *device : Pointeur vers un chaine de caractère contenant le nom de l'interface qui utilisé par pcaplib lors de la capture.
+
+* * * 
+
+### void assign_interface(int argc, char *argv[], char *device)
+
+Description :
+- Si aucun interface n'a été séléctionné par l'utilisateur, cette fonction assigne l'interface réseau par défaut. Si un interface à été séléctionné par l'utilisateur, elle vérifie que cette interface est valide en appelant la fonction check_interface_validity() avant de l'assigner.
+
+Argument : 
+- int argc : Nombre d'argument(s).
+- char * argv[] : Tableau chaines de caractères contenant les arguments.
+- char *device : Pointeur vers un chaine de caractère contenant le nom de l'interface utilisé par pcaplib lors de la capture.
+
+* * * 
+
+### Rule* rules_malloc(int count)
+Description :
+- Réserve en mémoire l'espace nécessaire afin de stocker les différentes structures de règle. Initialise également ces structures.
+
+Argument : 
+- int count : Nombre de structure Rules à créer.
+
+* * * 
+
+### int populate_rule_header(char *line, Rule *rule_ds)
 
 
 
