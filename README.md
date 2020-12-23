@@ -133,8 +133,6 @@ Yaids prend en charge deux type d'options :
 # Documentation du code source
 ## main.c
 
-
-### Structures
 #### <a name="struct-ids-rule">struct ids_rule</a>
 
 ```
@@ -158,7 +156,7 @@ Description :
 
 * * *
 
-#### <a name="struct-pcap-arguments">struct pcap_arguments<\a>
+#### <a name="struct-pcap-arguments">struct pcap_arguments</a>
 
 
 ```
@@ -178,11 +176,8 @@ Pour permettre d'envoyer les deux paramètres, nous avons décidé de créer une
 
 * * * 
 
-### Prototypes des fonctions
 
-* * * 
-
-#### <a name="print-help">void print_help(char * prg_name);<\a>
+#### <a name="print-help">void print_help(char * prg_name);</a>
 
 Description : 
 - Affiche le menu d'aide.
@@ -191,7 +186,7 @@ Argument :
 - char * prg_name : Nom du programme
 * * *
 
-#### <a name="abcd">void print_error(char * err_str);</a>
+#### <a name="print-error">void print_error(char * err_str);</a>
 
 Description :
 - Affiche un message d'erreur.
@@ -200,7 +195,7 @@ Argument :
 - char * err_str: Chaine de caractère à afficher à l'écran
 * * *
 
-#### void print_rules(Rule *rules, int count);
+#### <a name="print-rules"> void print_rules(Rule *rules, int count);</a>
 
 Description :
 - Affiche un résumé des règles présentes dans le tableau de règles.
@@ -211,7 +206,7 @@ Argument :
 
 * * *
 
-#### void remove_char_from_str(char *new_str, char *str, char char_to_remove);
+#### <a name="remove-char"> void remove_char_from_str(char *new_str, char *str, char char_to_remove);</a>
 
 Description :
 - Copie une chaine de caractère en retirant le caractère entré en paramètre.
@@ -223,7 +218,7 @@ Arguments :
 
 * * *
 
-#### bool is_action_in_rule_valid(char *action);
+#### <a name="is-action">bool is_action_in_rule_valid(char *action);</a>
 Description :
 
 - Vérifie la validité de la valeur présente dans le champ `action` d'une ligne extraite du fichier de règle.
@@ -233,7 +228,7 @@ Argument :
 
 * * *
 
-#### bool is_protocol_in_rules_valid(char *protocol);
+#### <a name="is-proto">bool is_protocol_in_rules_valid(char *protocol);</a>
 
 Description :
 - Vérifie la validité de la valeur présente dans le champ `protocole` d'une ligne extraite du fichier de règle.
@@ -243,7 +238,7 @@ Argument :
 
 * * *
 
-#### bool is_ip_in_rules_valid(char *ip);
+#### <a name="is-ip-in-rules">bool is_ip_in_rules_valid(char *ip);</a>
 
 Description :
 - Vérifie la validité de la valeur présente dans un des champs `ip` d'une ligne extraite du fichier de règle.
@@ -252,7 +247,7 @@ Argument :
 - char *ip : Chaine de caractère à analyser.
 * * *
 
-#### bool is_port_in_rules_valid(char *port);
+#### <a name="is-port-in-rules">bool is_port_in_rules_valid(char *port);</a>
 
 Description :
 - Vérifie la validité de la valeur présente dans un des champs `port` d'une ligne extraite du fichier de règle.
@@ -262,7 +257,7 @@ Argument :
 
 * * *
 
-#### bool is_direction_in_rules_valid(char *direction);
+#### <a name="is-direction-in-rules">bool is_direction_in_rules_valid(char *direction);</a>
 
 Description :
 - Vérifie la validité de la valeur présente dans le champ `direction` d'une ligne extraite du fichier de règle.
@@ -272,7 +267,7 @@ Argument :
 
 * * *
 
-#### bool is_ip_match(char* rules_ip, char* captured_ip);
+#### <a name="is-ip-match">bool is_ip_match(char* rules_ip, char* captured_ip);</a>
 
 Description :
 - Compare une ip contenue dans une structure règle avec l'ip fournie en paramètre. 
@@ -283,7 +278,7 @@ Argument :
 
 * * *
 
-#### bool is_port_match(int rule_port, int capture_port);
+#### <a name="is-port-match">bool is_port_match(int rule_port, int capture_port);</a>
 
 Description :
 - Compare un port contenu dans une structure règle avec le port fourni en paramètre. Retourne vrai si les ports correspondent. 
@@ -294,7 +289,7 @@ Argument :
 
 * * * 
 
-#### void check_interface_validity(char *choosen_interface_name);
+#### <a name="check-interface">void check_interface_validity(char *choosen_interface_name);</a>
 
 Description :
 - Vérifier que l'interface inséré en paramètre est bien présent sur la machine. 
@@ -304,7 +299,7 @@ Argument :
 
 * * * 
 
-#### int check_args_validity(int argc, char * argv[]);
+#### <a name="check-args">int check_args_validity(int argc, char * argv[]);</a>
 
 Description :
 - Vérifier que les arguments entrés par l'utilisateur lors de l'execution du programme sont valides. 
@@ -315,7 +310,7 @@ Argument :
 
 * * * 
 
-#### void assign_default_interface(char *device);
+#### <a name="assign-default-int">void assign_default_interface(char *device);</a>
 
 Description :
 - Assigne l'interface réseau par défaut.
@@ -325,7 +320,7 @@ Argument :
 
 * * * 
 
-#### void assign_interface(int argc, char *argv[], char *device);
+#### <a name="assign-int">void assign_interface(int argc, char *argv[], char *device);</a>
 
 Description :
 - Si aucun interface n'a été séléctionné par l'utilisateur, cette fonction assigne l'interface réseau par défaut. Si un interface à été séléctionné par l'utilisateur, elle vérifie que cette interface est valide en appelant la fonction check_interface_validity() avant de l'assigner.
@@ -337,7 +332,7 @@ Argument :
 
 * * * 
 
-#### Rule* rules_malloc(int count);
+#### <a name="count-lines">Rule* rules_malloc(int count);</a>
 
 Description :
 - Réserve en mémoire l'espace nécessaire afin de stocker les différentes structures de règle. Initialise également ces structures.
@@ -347,7 +342,7 @@ Argument :
 
 * * * 
 
-#### int populate_rule_header(char *line, Rule *rule_ds);
+#### <a name="populate-header">int populate_rule_header(char *line, Rule *rule_ds);</a>
 
 Description :
 - Divise une ligne du fichier de règle et remplit les champs d'entête d'une struture Rule avec les valeurs obtenues. La fonction vérifie que ces données soient bien valides avec de peupler la structure.
@@ -358,7 +353,7 @@ Arguments :
 
 * * * 
 
-#### int populate_rule_option(char *line, Rule *rule_ds);
+#### <a name="populate-option">int populate_rule_option(char *line, Rule *rule_ds);</a>
 
 Description :
 - Divise une ligne du fichier de règle et remplit les champs d'option d'une struture Rule avec les valeurs obtenues. La fonction vérifie que ces données soient valides avec de peupler la structure.
@@ -369,7 +364,7 @@ Arguments :
 
 * * * 
 
-#### int read_rules(FILE *rules_file, Rule *rules_ds, int count);
+#### <a name="read-rules">int read_rules(FILE *rules_file, Rule *rules_ds, int count);</a>
 
 Description :
 - Parcours chaques lignes du fichier de régles et appel les fonctions `populate_rule_header()` et `populate_rule_option()` afin de peupler la structure Rule.
@@ -381,7 +376,7 @@ Arguments :
 
 * * * 
 
-#### bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame);
+#### <a name="rules-matcher">bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame);</a>
 
 Description :
 - Effectue la comparaison entre UNE règle et une trame ethernet.
@@ -392,7 +387,7 @@ Arguments :
 
 * * * 
 
-#### void my_packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_char *packet);
+#### <a name="packet-handler">void my_packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_char *packet);</a>
 
 Description :
 - Fonction de callback systématiquement appelée lors de la capture d'une nouvelle trame par la fonction `pcap_loop`.
@@ -403,7 +398,7 @@ Arguments :
 
 * * * 
 
-#### int main(int argc, char *argv[]);
+#### <a name="main">int main(int argc, char *argv[]);</a>
 Description : 
 - Fonction principalement permettant :
 	- dddddd
@@ -411,7 +406,7 @@ Description :
 * * *
 
 ## populate.c
-#### void generate_ip(unsigned int ip, char ip_addr[]);
+#### <a name="generate-ip">void generate_ip(unsigned int ip, char ip_addr[]);</a>
 
 Description :
 - Permet de transormer un adresse ip de type u_int en chaine de caractère.
@@ -422,7 +417,7 @@ Arguments :
 
 * * *
 
-#### void print_payload(int payload_length, unsigned char *payload);
+#### <a name="print-payload">void print_payload(int payload_length, unsigned char *payload);</a>
 
 Description :
 - Permet d'afficher le contenu du payload d'un packet.
@@ -433,7 +428,7 @@ Arguments :
 
 * * * 
 
-#### void print_ethernet_header(ETHER_Frame *frame);
+#### <a name="print-ethernet-header">void print_ethernet_header(ETHER_Frame *frame);</a>
 
 Description :
 - Permet d'afficher le contenu d'un entête ethernet.
@@ -443,7 +438,7 @@ Arguments :
 
 * * * 
 
-#### void print_ip_header(IP_Packet *packet);
+#### <a name="print-ip-header">void print_ip_header(IP_Packet *packet);</a>
 
 Description :
 - Permet d'afficher le contenu d'un entête ip.
@@ -453,7 +448,7 @@ Arguments :
 
 * * * 
 
-#### void print_tcp_header(TCP_Segment *segment);
+#### <a name="print-tcp-header">void print_tcp_header(TCP_Segment *segment);</a>
 
 Description :
 - Permet d'afficher le contenu d'un entête TCP.
@@ -463,7 +458,7 @@ Arguments :
 
 * * * 
 
-#### void print_udp_header(UDP_Datagram *datagram);
+#### <a name="print-udp-header">void print_udp_header(UDP_Datagram *datagram);</a>
 
 Description :
 - Permet d'afficher le contenu d'un entête UDP.
@@ -473,7 +468,7 @@ Arguments :
 
 * * *
 
-#### void print_arp_header(ARP_Packet *packet);
+#### <a name="print-arp-header">void print_arp_header(ARP_Packet *packet);</a>
 
 Description :
 - Permet d'afficher le contenu d'un entête ARP.
@@ -483,7 +478,7 @@ Arguments :
 
 * * *
 
-#### void print_icmp_header(ICMP_Msg *message);
+#### <a name="print-icmp-header">void print_icmp_header(ICMP_Msg *message);</a>
 
 Description :
 - Permet d'afficher le contenu d'un entête ICMP.
@@ -491,7 +486,7 @@ Description :
 Arguments : 
 - ICMP_Msg *message : Pointeur vers un message ICMP.
 
-#### int populate_packet_ds(const struct pcap_pkthdr *header, const u_char *packet, ETHER_Frame *custom_frame);
+#### <a name="populate-packet-ds">int populate_packet_ds(const struct pcap_pkthdr *header, const u_char *packet, ETHER_Frame *custom_frame);</a>
 
 Description :
 - Permet de peupler une structure de type ETHER_Frame en fonction du packet capturé par pcaplib.
@@ -500,6 +495,236 @@ Arguments :
 - const struct pcap_pkthdr *header : Pointeur permettant d'accéder aux informations relatives au paquet brute capturé par pcaplib.
 - const u_char *packet : Pointeur vers le paquet brute capturé par pcaplib.
 - ETHER_Frame *custom_frame : Pointeur vers la structure custom_ethernet à peupler.
+
+* * *
+
+#### <a name="sniff-eth">struct sniff_ethernet</a>
+
+ 
+``` C
+struct sniff_ethernet 
+{
+	u_char ether_dhost[ETHER_ADDR_LEN]; /* Destination host address */
+	u_char ether_shost[ETHER_ADDR_LEN]; /* Source host address */
+	u_short ether_type; /* IP? ARP? RARP? etc */
+};
+
+```
+
+* * *
+
+#### <a name="sniff-arp">struct sniff_arp</a>
+
+
+``` C
+struct sniff_arp {
+	u_short arp_htype;
+	u_short arp_ptype;
+	u_char arp_hlen;
+	u_char arp_plen;
+	u_short arp_operation;
+	u_char arp_src[ETHER_ADDR_LEN];
+	u_char arp_src_proto_addr[4];
+	u_char arp_dst[ETHER_ADDR_LEN];
+	u_char arp_dst_proto_addr[4];
+};
+
+```
+* * *
+
+#### <a name="sniff-ip">struct sniff_ip</a>
+
+
+``` C
+struct sniff_ip
+{
+	u_char ip_vhl;          /* version << 4 | header length >> 2 */
+	u_char ip_tos;          /* type of service */
+	u_short ip_len;         /* total length */
+	u_short ip_id;          /* identification */
+	u_short ip_off;         /* fragment offset field */
+	#define IP_RF 0x8000            /* reserved fragment flag */
+	#define IP_DF 0x4000            /* don't fragment flag */
+	#define IP_MF 0x2000            /* more fragments flag */
+	#define IP_OFFMASK 0x1fff       /* mask for fragmenting bits */
+	u_char ip_ttl;          /* time to live */
+	u_char ip_p;            /* protocol */
+	u_short ip_sum;         /* checksum */
+	struct in_addr ip_src,ip_dst; /* source and dest address */
+};
+
+```
+* * *
+
+#### <a name="sniff-icmp">struct sniff_icmp</a>
+
+
+``` C
+struct sniff_icmp 
+{
+    u_char icmp_type;
+	#define ICMP_ECHO 0x8
+	#define ICMP_REPLY 0x0
+    u_char icmp_code;
+    u_int16_t icmp_sum;
+    u_int16_t icmp_id;
+	u_int16_t icmp_sequence;
+};
+
+```
+
+* * *
+
+#### <a name="sniff-udp">struct sniff_udp</a>
+
+
+``` C
+struct sniff_udp {
+	u_short uh_sport;       /* source port */
+	u_short uh_dport;       /* destination port */
+	u_short uh_ulen;        /* udp length */
+	u_short uh_sum;         /* udp checksum */
+};
+
+```
+
+
+* * *
+
+#### <a name="sniff-tcp">struct sniff_tcp</a>
+
+``` C
+#define IP_HL(ip)   (((ip)->ip_vhl) & 0x0f)
+#define IP_V(ip)    (((ip)->ip_vhl) >> 4)
+typedef u_int tcp_seq;
+struct sniff_tcp {
+        u_short th_sport;       /* source port */
+        u_short th_dport;       /* destination port */
+        tcp_seq th_seq;         /* sequence number */
+        tcp_seq th_ack;         /* acknowledgement number */
+        u_char th_offx2;        /* data offset, rsvd */
+        #define TH_OFF(th)      (((th)->th_offx2 & 0xf0) >> 4)
+        u_char th_flags;
+        #define TH_FIN 0x01
+        #define TH_SYN 0x02
+        #define TH_RST 0x04
+        #define TH_PUSH 0x08
+        #define TH_ACK 0x10
+        #define TH_URG 0x20
+        #define TH_ECE 0x40
+        #define TH_CWR 0x80
+        #define TH_FLAGS (TH_FIN|TH_SYN|TH_RST|TH_ACK|TH_URG|TH_ECE|TH_CWR)
+        u_short th_win;         /* window */
+        u_short th_sum;         /* checksum */
+        u_short th_urp;         /* urgent pointer */
+};
+
+```
+
+* * *
+
+#### <a name="custom-icmp">struct custom_icmp</a>
+
+``` C
+struct custom_icmp
+{
+	int type;
+	int code;
+	int id;
+	int sequence;
+
+} typedef ICMP_Msg;
+
+```
+
+
+* * *
+
+#### <a name="custom-udp">struct custom_udp</a>
+
+``` C
+struct custom_udp
+{
+	int source_port;
+	int destination_port;
+	unsigned char *data;
+	int data_length;
+
+} typedef UDP_Datagram;
+
+```
+
+* * *
+
+#### <a name="custom-tcp">struct custom_tcp</a>
+
+``` C
+struct custom_tcp
+{
+	int source_port;
+	int destination_port;
+	unsigned char *data;
+	int data_length;
+
+} typedef UDP_Datagram;
+
+```
+* * *
+
+#### <a name="custom-ip">struct custom_ip</a>
+
+``` C
+struct custom_ip
+{
+	char source_ip[IP_ADDR_LEN_STR];
+	char destination_ip[IP_ADDR_LEN_STR];
+	int protocol;
+	TCP_Segment tcp_data;
+	UDP_Datagram udp_data;
+	ICMP_Msg icmp_data;
+
+} typedef IP_Packet;
+
+```
+
+* * *
+
+#### <a name="custom-arp">struct custom_arp</a>
+
+``` C
+struct custom_arp
+{
+	int hw_type;
+	int proto_layer3;
+	int hw_addr_len;
+	int proto_layer3_addr_len;
+	int operation;
+	u_char source_mac[6];
+	u_char source_proto_addr[4];
+	u_char arp_dst[6];
+	u_char arp_dst_proto_addr[4];
+} typedef ARP_Packet;
+
+
+```
+* * *
+
+#### <a name="custom-eth">struct custom_ethernet</a>
+
+``` C
+struct custom_ethernet
+{
+        char source_mac[ETHER_ADDR_LEN_STR];
+        char destination_mac[ETHER_ADDR_LEN_STR];
+        char payload_protocol[PAYLOAD_PROTOCOL_LEN_STR];
+        int ethertype;
+        int frame_size;
+        IP_Packet ip_data;
+        ARP_Packet arp_data;
+
+} typedef ETHER_Frame;
+
+```
 
 ## Licence
 
