@@ -134,7 +134,7 @@ Argument :
 
 * * *
 
-#### bool is_protocol_in_rules_valid(char *protocol)
+### bool is_protocol_in_rules_valid(char *protocol)
 
 Description :
 - Vérifie la validité de la valeur présente dans le champ `protocole` d'une ligne extraite du fichier de règle.
@@ -144,7 +144,7 @@ Argument :
 
 * * *
 
-#### bool is_ip_in_rules_valid(char *ip)
+### bool is_ip_in_rules_valid(char *ip)
 
 Description :
 - Vérifie la validité de la valeur présente dans un des champs `ip` d'une ligne extraite du fichier de règle.
@@ -239,6 +239,7 @@ Argument :
 * * * 
 
 ### Rule* rules_malloc(int count)
+
 Description :
 - Réserve en mémoire l'espace nécessaire afin de stocker les différentes structures de règle. Initialise également ces structures.
 
@@ -249,7 +250,157 @@ Argument :
 
 ### int populate_rule_header(char *line, Rule *rule_ds)
 
+Description :
+- Divise une ligne du fichier de règle et remplit les champs d'entête d'une struture Rule avec les valeurs obtenues. La fonction vérifie que ces données soient bien valides avec de peupler la structure.
 
+Arguments : 
+- char *line : Ligne du fichier de règles à parcourir.
+- Rule *rule_ds : structure Rule à peupler.
+
+* * * 
+
+### int populate_rule_option(char *line, Rule *rule_ds)
+
+Description :
+- Divise une ligne du fichier de règle et remplit les champs d'option d'une struture Rule avec les valeurs obtenues. La fonction vérifie que ces données soient valides avec de peupler la structure.
+
+Arguments : 
+- char *line : Ligne du fichier de règles à parcourir.
+- Rule *rule_ds : structure Rule à peupler.
+
+* * * 
+
+### int read_rules(FILE *rules_file, Rule *rules_ds, int count)
+
+Description :
+- Parcours chaques lignes du fichier de régles et appel les fonctions `populate_rule_header()` et `populate_rule_option()` afin de peupler la structure Rule.
+
+Arguments : 
+- FILE *rules_file : Pointeur vers le fichier de règles déjà ouvert.
+- Rule *rule_ds : Pointeur vers le tableau de structures Rule à peupler.
+- int count : Nombre de ligne présentes dans le fichier de règles. 
+
+* * * 
+
+### bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
+
+Description :
+- Effectue la comparaison entre UNE règle et une trame ethernet.
+
+Arguments : 
+- Rule *rule_ds : Pointeur vers la structures Rule à comparer.
+- ETHER_Frame *frame : Pointeur vers la structure custom_ethernet contenant la trame capturée.
+
+* * * 
+
+### void my_packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
+
+Description :
+- Fonction de callback systématiquement appelée lors de la capture d'une nouvelle trame par la fonction `pcap_loop`.
+
+Arguments : 
+- u_char *args : Pointeur vers une structures contenant les valeurs supplémentaire à in.
+- ETHER_Frame *frame : Pointeur vers la structure custom_ethernet contenant la trame capturée.
+
+* * * 
+
+### int main(int argc, char *argv[])
+Description : 
+- Fonction principalement permettant :
+	- dddddd
+
+* * *
+
+## populate.c
+### void generate_ip(unsigned int ip, char ip_addr[]);
+
+Description :
+- Permet de transormer un adresse ip de type u_int en chaine de caractère.
+
+Arguments : 
+- unsigned int ip : IP représenté avec le type entier.
+- char ip_addr[] : Chaine de caractère à remplir après la conversion.
+
+* * *
+
+### void print_payload(int payload_length, unsigned char *payload)
+
+Description :
+- Permet d'afficher le contenu du payload d'un packet.
+
+Arguments : 
+- int payload_length : Longueur du payload.
+- unsigned char *payload : Pointeur vers le payload.
+
+* * * 
+
+#### void print_ethernet_header(ETHER_Frame *frame)
+
+Description :
+- Permet d'afficher le contenu d'un entête ethernet.
+
+Arguments : 
+- ETHER_Frame *frame : Pointeur vers une trame ethernet.
+
+* * * 
+
+#### void print_ip_header(IP_Packet *packet)
+
+Description :
+- Permet d'afficher le contenu d'un entête ip.
+
+Arguments : 
+- IP_Packet *packet : Pointeur vers un packet IP.
+
+* * * 
+
+#### void print_tcp_header(TCP_Segment *segment)
+
+Description :
+- Permet d'afficher le contenu d'un entête TCP.
+
+Arguments : 
+- TCP_Segment *segment : Pointeur vers un segment TCP.
+
+* * * 
+
+#### void print_udp_header(UDP_Datagram *datagram)
+
+Description :
+- Permet d'afficher le contenu d'un entête UDP.
+
+Arguments : 
+- UDP_Datagram *datagram : Pointeur vers un datagramme UDP.
+
+* * *
+
+#### void print_arp_header(ARP_Packet *packet);
+
+Description :
+- Permet d'afficher le contenu d'un entête ARP.
+
+Arguments : 
+- ARP_Packet *packet : Pointeur vers un paquet ARP.
+
+* * *
+
+#### void print_icmp_header(ICMP_Msg *message);
+
+Description :
+- Permet d'afficher le contenu d'un entête ICMP.
+
+Arguments : 
+- ICMP_Msg *message : Pointeur vers un message ICMP.
+
+#### int populate_packet_ds(const struct pcap_pkthdr *header, const u_char *packet, ETHER_Frame *custom_frame);
+
+Description :
+- Permet de peupler une structure de type ETHER_Frame en fonction du packet capturé par pcaplib.
+
+Arguments : 
+- const struct pcap_pkthdr *header : Pointeur permettant d'accéder aux informations relatives au paquet brute capturé par pcaplib.
+- const u_char *packet : Pointeur vers le paquet brute capturé par pcaplib.
+- ETHER_Frame *custom_frame : Pointeur vers la structure custom_ethernet à peupler.
 
 ## Licence
 
