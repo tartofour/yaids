@@ -16,40 +16,59 @@
     - [Protocoles pris en charge](#protocoles-pris-en-charge)
     - [Options de règles](#options-de-règles)
 - Documentation du code source
-    - [main.c](#main.c)
-    	- Includes
-    	- Structures
-    		- [struct ids_rule](#test)
-			- [struct pcap_arguments](#test)
-		- Fonctions
-			- [void print_help(char * prg_name);](#test)
-			- [void print_error(char * err_str);](#test)
-			- [void print_rules(Rule *rules, int count);](#test)
-			- [void initialize_http_message_struct(Http_msg message);](#test)
-			- [void remove_char_from_str(char *new_str, char *str, char char_to_remove);](#test)
-			- [bool is_action_in_rules_valid(char *action_str);](#test)
-			- [bool is_protocol_in_rules_valid(char *protocol);](#test)
-			- [bool is_ip_in_rules_valid(char *ip);](#test)
-			- [bool is_port_in_rules_valid(char *port);](#test)
-			- [bool is_direction_in_rules_valid(char *direction);](#test)
-			- [bool is_ip_match(char* rules_ip, char* captured_ip);](#test)
-			- [bool is_port_match(int rule_port, int capture_port);](#test)
-			- [void check_interface_validity(char *choosen_interface_name);](#test)
-			- [int check_args_validity(int argc, char * argv[]);](#test)
-			- [void assign_default_interface(char *device);](#test)
-			- [void assign_interface(int argc, char *argv[], char *device);](#test)
-			- [int count_file_lines(FILE* file);](#test)
-			- [Rule* rules_malloc(int count);](#test)
-			- [int populate_rule_header(char *line, Rule *rule_ds);](#test)
-			- [int populate_rule_option(char *line, Rule *rule_ds);](#test)
-			- [int read_rules(FILE *rules_file, Rule *rules_ds, int count);](#test)
-			- [bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame);](#test)
-			- [void my_packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_char *packet);](#test)
-			- [int main(int argc, char *argv[]);](#test)
+    - **main.c**
+		- [struct ids_rule](#struct-ids_rule)
+		- [struct pcap_arguments](#struct-pcap-arguments)
+		- [void print_help(char *prg_name);](#print-help)
+		- [void print_error(char *err_str);](#print-error)
+		- [void print_rules(Rule *rules, int count);](#print-rules)
+		- [void initialize_http_message_struct(Http_msg message);](#initialize-http)
+		- [void remove_char_from_str(char *new_str, char *str, char char_to_remove);](#remove-char)
+		- [bool is_action_in_rules_valid(char *action_str);](#is-action)
+		- [bool is_protocol_in_rules_valid(char *protocol);](#is-proto)
+		- [bool is_ip_in_rules_valid(char *ip);](#is-ip-in-rules)
+		- [bool is_port_in_rules_valid(char *port);](#is-port-in-rules)
+		- [bool is_direction_in_rules_valid(char *direction);](#is-direction)
+		- [bool is_ip_match(char* rules_ip, char* captured_ip);](#is-ip-match)
+		- [bool is_port_match(int rule_port, int capture_port);](#is-port-match)
+		- [void check_interface_validity(char *choosen_interface_name);](#check-interface)
+		- [int check_args_validity(int argc, char * argv[]);](#check-args)
+		- [void assign_default_interface(char *device);](#assign-default-int)
+		- [void assign_interface(int argc, char *argv[], char *device);](#assign-int)
+		- [int count_file_lines(FILE* file);](#count-lines)
+		- [Rule* rules_malloc(int count);](#rules-malloc)
+		- [int populate_rule_header(char *line, Rule *rule_ds);](#populate-header)
+		- [int populate_rule_option(char *line, Rule *rule_ds);](#populate-option)
+		- [int read_rules(FILE *rules_file, Rule *rules_ds, int count);](#read-rules)
+		- [bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame);](#rules-matcher)
+		- [void my_packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_char *packet);](#packet-handler)
+		- [int main(int argc, char *argv[]);](#main)
 
-    - [populate.c](#populate.c)
-    - [populate.h](#populate.h)
-    
+    - **populate.c**
+		- [void generate_ip(unsigned int ip, char ip_addr[]);](#generate-ip)
+		- [void print_payload(int payload_length, unsigned char *payload);](#print-payload)
+		- [void print_ethernet_header(ETHER_Frame *frame);](#print-ethernet-header)
+		- [void print_ip_header(IP_Packet *packet);](#print-ip-header)
+		- [void print_tcp_header(TCP_Segment *segment);](#print-tcp-header)
+		- [void print_udp_header(UDP_Datagram *datagram);](#print-udp-header)
+		- [void print_arp_header(ARP_Packet *packet);](#print-arp-header)
+		- [void print_icmp_header(ICMP_Msg *message);](#print-icmp-header)
+		- [int populate_packet_ds(const struct pcap_pkthdr *header, const u_char *packet, ETHER_Frame *custom_frame);](#populate-packet-ds)
+    		
+    - **populate.h**
+		- [struct sniff_ethernet](#sniff-eth)
+		- [struct sniff_arp](#sniff-arp)
+		- [struct sniff_ip](#sniff-ip)
+		- [struct sniff_icmp](#sniff-icmp)
+		- [struct sniff_udp](#sniff-udp)
+		- [struct sniff_tcp](#sniff-tcp)
+		- [struct custom_icmp](#custom-icmp)
+		- [struct custom_udp](#custom-udp)
+		- [struct custom_tcp](#custom-tcp)
+		- [struct custom_ip](#custom-ip)
+		- [struct custom_arp](#custom-arp)
+		- [struct custom_ethernet](#custom-eth)
+
 # Démarrage rapide
 ## Dépendances
 
@@ -116,8 +135,7 @@ Yaids prend en charge deux type d'options :
 
 
 ### Structures
-
-#### struct ids_rule
+#### <a name="struct-ids-rule">struct ids_rule</a>
 
 ```
 struct ids_rule
@@ -140,7 +158,8 @@ Description :
 
 * * *
 
-#### struct pcap_arguments
+#### <a name="struct-pcap-arguments">struct pcap_arguments<\a>
+
 
 ```
 struct pcap_arguments
@@ -163,7 +182,7 @@ Pour permettre d'envoyer les deux paramètres, nous avons décidé de créer une
 
 * * * 
 
-#### void print_help(char * prg_name);
+#### <a name="print-help">void print_help(char * prg_name);<\a>
 
 Description : 
 - Affiche le menu d'aide.
@@ -172,7 +191,7 @@ Argument :
 - char * prg_name : Nom du programme
 * * *
 
-#### void print_error(char * err_str);
+#### <a name="abcd">void print_error(char * err_str);</a>
 
 Description :
 - Affiche un message d'erreur.
