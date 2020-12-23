@@ -22,7 +22,6 @@
 		- [void print_help(char *prg_name);](#print-help)
 		- [void print_error(char *err_str);](#print-error)
 		- [void print_rules(Rule *rules, int count);](#print-rules)
-		- [void initialize_http_message_struct(Http_msg message);](#initialize-http)
 		- [void remove_char_from_str(char *new_str, char *str, char char_to_remove);](#remove-char)
 		- [bool is_action_in_rules_valid(char *action_str);](#is-action)
 		- [bool is_protocol_in_rules_valid(char *protocol);](#is-proto)
@@ -183,7 +182,7 @@ Description :
 - Affiche le menu d'aide.
 
 Argument : 
-- char * prg_name : Nom du programme
+- `char *prg_name` : Nom du programme
 * * *
 
 #### <a name="print-error">void print_error(char * err_str);</a>
@@ -192,7 +191,7 @@ Description :
 - Affiche un message d'erreur.
 
 Argument : 
-- char * err_str: Chaine de caractère à afficher à l'écran
+- `char *err_str` : Chaine de caractère à afficher à l'écran
 * * *
 
 #### <a name="print-rules"> void print_rules(Rule *rules, int count);</a>
@@ -201,8 +200,8 @@ Description :
 - Affiche un résumé des règles présentes dans le tableau de règles.
 
 Argument : 
-- Rule *rules : Tableau d'instances rules.
-- int count : Nombre d'instances rules dans le tableau.
+- `Rule *rules` : Tableau d'instances rules.
+- `int count` : Nombre d'instances rules dans le tableau.
 
 * * *
 
@@ -212,9 +211,9 @@ Description :
 - Copie une chaine de caractère en retirant le caractère entré en paramètre.
 
 Arguments : 
-- char *new_str : Nouvelle chaine de caractère à remplir.
-- char *str : Chaine de caractère à parcourir.
-- char char_to_remove : Caractère à supprimer.
+- `char *new_str` : Nouvelle chaine de caractère à remplir.
+- `char *str` : Chaine de caractère à parcourir.
+- `char char_to_remove` : Caractère à supprimer.
 
 * * *
 
@@ -224,7 +223,7 @@ Description :
 - Vérifie la validité de la valeur présente dans le champ `action` d'une ligne extraite du fichier de règle.
 
 Argument : 
-- char *action : Chaine de caractère à analyser.
+- `char *action` : Chaine de caractère à analyser.
 
 * * *
 
@@ -234,7 +233,7 @@ Description :
 - Vérifie la validité de la valeur présente dans le champ `protocole` d'une ligne extraite du fichier de règle.
 
 Argument : 
-- char *protocol : Chaine de caractère à analyser
+- `char *protocol` : Chaine de caractère à analyser
 
 * * *
 
@@ -244,7 +243,7 @@ Description :
 - Vérifie la validité de la valeur présente dans un des champs `ip` d'une ligne extraite du fichier de règle.
 
 Argument : 
-- char *ip : Chaine de caractère à analyser.
+- `char *ip` : Chaine de caractère à analyser.
 * * *
 
 #### <a name="is-port-in-rules">bool is_port_in_rules_valid(char *port);</a>
@@ -253,7 +252,7 @@ Description :
 - Vérifie la validité de la valeur présente dans un des champs `port` d'une ligne extraite du fichier de règle.
 
 Argument : 
-- char *port : Chaine de caractère à analyser
+- `char *port` : Chaine de caractère à analyser
 
 * * *
 
@@ -263,7 +262,7 @@ Description :
 - Vérifie la validité de la valeur présente dans le champ `direction` d'une ligne extraite du fichier de règle.
 
 Argument : 
-- char *direction : Chaine de caractère à analyser.
+- `char *direction` : Chaine de caractère à analyser.
 
 * * *
 
@@ -273,8 +272,8 @@ Description :
 - Compare une ip contenue dans une structure règle avec l'ip fournie en paramètre. 
 
 Argument : 
-- char* rules_ip : IP source ou destination stockée dans une structure règle.
-- char* captured_ip : IP à comparer.
+- `char *rules_ip` : IP source ou destination stockée dans une structure règle.
+- `char *captured_ip` : IP à comparer.
 
 * * *
 
@@ -284,8 +283,8 @@ Description :
 - Compare un port contenu dans une structure règle avec le port fourni en paramètre. Retourne vrai si les ports correspondent. 
 
 Argument : 
-- char* rules_port : Port source ou destination stocké dans une structure règle.
-- int captured_port : Port à comparer.
+- `char *rules_port` : Port source ou destination stocké dans une structure règle.
+- `int captured_port` : Port à comparer.
 
 * * * 
 
@@ -295,7 +294,7 @@ Description :
 - Vérifier que l'interface inséré en paramètre est bien présent sur la machine. 
 
 Argument : 
-- char* char *choosen_interface_name : Nom de l'interface à vérifier.
+- `char *choosen_interface_name` : Nom de l'interface à vérifier.
 
 * * * 
 
@@ -304,9 +303,9 @@ Argument :
 Description :
 - Vérifier que les arguments entrés par l'utilisateur lors de l'execution du programme sont valides. 
 
-Argument : 
-- int argc : Nombre d'arguments.
-- char * argv[] : Tableau chaine de caractère contenant les arguments.
+Arguments : 
+- `int argc` : Nombre d'arguments.
+- `char * argv[]` : Tableau chaine de caractère contenant les arguments.
 
 * * * 
 
@@ -316,7 +315,7 @@ Description :
 - Assigne l'interface réseau par défaut.
 
 Argument : 
-- char *device : Pointeur vers un chaine de caractère contenant le nom de l'interface qui utilisé par pcaplib lors de la capture.
+- `char *device` : Pointeur vers un chaine de caractère contenant le nom de l'interface qui utilisé par pcaplib lors de la capture.
 
 * * * 
 
@@ -326,9 +325,9 @@ Description :
 - Si aucun interface n'a été séléctionné par l'utilisateur, cette fonction assigne l'interface réseau par défaut. Si un interface à été séléctionné par l'utilisateur, elle vérifie que cette interface est valide en appelant la fonction check_interface_validity() avant de l'assigner.
 
 Argument : 
-- int argc : Nombre d'argument(s).
-- char * argv[] : Tableau chaines de caractères contenant les arguments.
-- char *device : Pointeur vers un chaine de caractère contenant le nom de l'interface utilisé par pcaplib lors de la capture.
+- `int argc` : Nombre d'argument(s).
+- `char * argv[]` : Tableau chaines de caractères contenant les arguments.
+- `char *device` : Pointeur vers un chaine de caractère contenant le nom de l'interface utilisé par pcaplib lors de la capture.
 
 * * * 
 
@@ -338,7 +337,7 @@ Description :
 - Réserve en mémoire l'espace nécessaire afin de stocker les différentes structures de règle. Initialise également ces structures.
 
 Argument : 
-- int count : Nombre de structure Rules à créer.
+- `int count` : Nombre de structure Rules à créer.
 
 * * * 
 
@@ -348,8 +347,8 @@ Description :
 - Divise une ligne du fichier de règle et remplit les champs d'entête d'une struture Rule avec les valeurs obtenues. La fonction vérifie que ces données soient bien valides avec de peupler la structure.
 
 Arguments : 
-- char *line : Ligne du fichier de règles à parcourir.
-- Rule *rule_ds : structure Rule à peupler.
+- `char *line` : Ligne du fichier de règles à parcourir.
+- `Rule *rule_ds` : structure Rule à peupler.
 
 * * * 
 
@@ -359,8 +358,8 @@ Description :
 - Divise une ligne du fichier de règle et remplit les champs d'option d'une struture Rule avec les valeurs obtenues. La fonction vérifie que ces données soient valides avec de peupler la structure.
 
 Arguments : 
-- char *line : Ligne du fichier de règles à parcourir.
-- Rule *rule_ds : structure Rule à peupler.
+- `char *line` : Ligne du fichier de règles à parcourir.
+- `Rule *rule_ds` : structure Rule à peupler.
 
 * * * 
 
@@ -370,9 +369,9 @@ Description :
 - Parcours chaques lignes du fichier de régles et appel les fonctions `populate_rule_header()` et `populate_rule_option()` afin de peupler la structure Rule.
 
 Arguments : 
-- FILE *rules_file : Pointeur vers le fichier de règles déjà ouvert.
-- Rule *rule_ds : Pointeur vers le tableau de structures Rule à peupler.
-- int count : Nombre de ligne présentes dans le fichier de règles. 
+- `FILE *rules_file` : Pointeur vers le fichier de règles déjà ouvert.
+- `Rule *rule_ds` : Pointeur vers le tableau de structures Rule à peupler.
+- `int count` : Nombre de ligne présentes dans le fichier de règles. 
 
 * * * 
 
@@ -382,8 +381,8 @@ Description :
 - Effectue la comparaison entre UNE règle et une trame ethernet.
 
 Arguments : 
-- Rule *rule_ds : Pointeur vers la structures Rule à comparer.
-- ETHER_Frame *frame : Pointeur vers la structure custom_ethernet contenant la trame capturée.
+- `Rule *rule_ds` : Pointeur vers la structures Rule à comparer.
+- `ETHER_Frame *frame` : Pointeur vers la structure custom_ethernet contenant la trame capturée.
 
 * * * 
 
@@ -393,8 +392,8 @@ Description :
 - Fonction de callback systématiquement appelée lors de la capture d'une nouvelle trame par la fonction `pcap_loop`.
 
 Arguments : 
-- u_char *args : Pointeur vers une structures contenant les valeurs supplémentaire à in.
-- ETHER_Frame *frame : Pointeur vers la structure custom_ethernet contenant la trame capturée.
+- `u_char *args` : Pointeur vers une structures contenant les valeurs supplémentaire à in.
+- `ETHER_Frame *frame` : Pointeur vers la structure custom_ethernet contenant la trame capturée.
 
 * * * 
 
@@ -412,8 +411,8 @@ Description :
 - Permet de transormer un adresse ip de type u_int en chaine de caractère.
 
 Arguments : 
-- unsigned int ip : IP représenté avec le type entier.
-- char ip_addr[] : Chaine de caractère à remplir après la conversion.
+- `unsigned int ip` : IP représenté avec le type entier.
+- `char ip_addr[]` : Chaine de caractère à remplir après la conversion.
 
 * * *
 
@@ -423,8 +422,8 @@ Description :
 - Permet d'afficher le contenu du payload d'un packet.
 
 Arguments : 
-- int payload_length : Longueur du payload.
-- unsigned char *payload : Pointeur vers le payload.
+- `int payload_length` : Longueur du payload.
+- `unsigned char *payload` : Pointeur vers le payload.
 
 * * * 
 
@@ -434,7 +433,7 @@ Description :
 - Permet d'afficher le contenu d'un entête ethernet.
 
 Arguments : 
-- ETHER_Frame *frame : Pointeur vers une trame ethernet.
+- `ETHER_Frame *frame` : Pointeur vers une trame ethernet.
 
 * * * 
 
@@ -444,7 +443,7 @@ Description :
 - Permet d'afficher le contenu d'un entête ip.
 
 Arguments : 
-- IP_Packet *packet : Pointeur vers un packet IP.
+- `IP_Packet *packet` : Pointeur vers un packet IP.
 
 * * * 
 
@@ -454,7 +453,7 @@ Description :
 - Permet d'afficher le contenu d'un entête TCP.
 
 Arguments : 
-- TCP_Segment *segment : Pointeur vers un segment TCP.
+- `TCP_Segment *segment` : Pointeur vers un segment TCP.
 
 * * * 
 
@@ -464,7 +463,7 @@ Description :
 - Permet d'afficher le contenu d'un entête UDP.
 
 Arguments : 
-- UDP_Datagram *datagram : Pointeur vers un datagramme UDP.
+- `UDP_Datagram *datagram` : Pointeur vers un datagramme UDP.
 
 * * *
 
@@ -474,7 +473,7 @@ Description :
 - Permet d'afficher le contenu d'un entête ARP.
 
 Arguments : 
-- ARP_Packet *packet : Pointeur vers un paquet ARP.
+- `ARP_Packet *packet` : Pointeur vers un paquet ARP.
 
 * * *
 
@@ -484,7 +483,9 @@ Description :
 - Permet d'afficher le contenu d'un entête ICMP.
 
 Arguments : 
-- ICMP_Msg *message : Pointeur vers un message ICMP.
+- `ICMP_Msg *message` : Pointeur vers un message ICMP.
+
+* * * 
 
 #### <a name="populate-packet-ds">int populate_packet_ds(const struct pcap_pkthdr *header, const u_char *packet, ETHER_Frame *custom_frame);</a>
 
@@ -492,9 +493,9 @@ Description :
 - Permet de peupler une structure de type ETHER_Frame en fonction du packet capturé par pcaplib.
 
 Arguments : 
-- const struct pcap_pkthdr *header : Pointeur permettant d'accéder aux informations relatives au paquet brute capturé par pcaplib.
-- const u_char *packet : Pointeur vers le paquet brute capturé par pcaplib.
-- ETHER_Frame *custom_frame : Pointeur vers la structure custom_ethernet à peupler.
+- `const struct pcap_pkthdr *header` : Pointeur permettant d'accéder aux informations relatives au paquet brute capturé par pcaplib.
+- `const u_char *packet` : Pointeur vers le paquet brute capturé par pcaplib.
+- `ETHER_Frame *custom_frame` : Pointeur vers la structure custom_ethernet à peupler.
 
 * * *
 
