@@ -39,7 +39,7 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <syslog.h>
-#include <regex.h>
+#include <pcre.h>
 //#include <time.h>
 //#include <zlib.h>
 #include "populate.h"
@@ -60,6 +60,8 @@
 #define STR_MAX_SIZE 255
 #define ARGS_MAX_SIZE 255
 
+#define OVECCOUNT 30
+
 struct ids_rule
 {
 	char action[ACTION_LEN_STR];
@@ -71,7 +73,7 @@ struct ids_rule
 	int port_dst;
 	char content[STR_MAX_SIZE];
 	char msg[STR_MAX_SIZE];
-	char regex[STR_MAX_SIZE];
+	char pcre[STR_MAX_SIZE];
    // int count;
    // time_t seconds;
 	
@@ -177,9 +179,9 @@ void print_rules(Rule *rules, int count)
 		{
 			printf("Content : %s\n", rules[i].content);
 		}		
-		if (strlen(rules[i].regex) > 0)
+		if (strlen(rules[i].pcre) > 0)
 		{
-			printf("Regex : %s\n", rules[i].regex);
+			printf("PCRE : %s\n", rules[i].pcre);
 		}	
 		printf("\n");
 	}
@@ -299,6 +301,22 @@ bool is_direction_in_rules_valid(char *direction)
 	return false;
 }
 
+bool is_pcre_in_rules_valid(char *regex)
+{
+	pcre *compiled_pcre = NULL;
+	const char *error ;
+	int error_offset;
+	
+	compiled_pcre = pcre_compile(regex, 0, &error, &error_offset, NULL);
+	if (compiled_pcre == NULL)
+	{
+		pcre_free(compiled_pcre);
+		return false;
+	}
+	pcre_free(compiled_pcre);
+	return true;
+}
+
 bool is_ip_match(char* rules_ip, char* captured_ip)
 {
 	if (strcmp(rules_ip, "any") == 0 || strcmp(rules_ip, captured_ip) == 0)
@@ -316,6 +334,8 @@ bool is_port_match(int rule_port, int capture_port)
 	}
 	return false;
 }
+
+
 
 void check_interface_validity(char *choosen_interface_name)
 {
@@ -442,7 +462,7 @@ Rule* rules_malloc(int count)
 		memset(ptr->ip_dst, '\0', IP_ADDR_LEN_STR);
 		memset(ptr->content, '\0', STR_MAX_SIZE);
 		memset(ptr->msg, '\0', STR_MAX_SIZE);
-		memset(ptr->regex, '\0', STR_MAX_SIZE);
+		memset(ptr->pcre, '\0', STR_MAX_SIZE);
 		ptr->port_src = -1;
 		ptr->port_dst = -1;
 	}
@@ -507,10 +527,7 @@ int populate_rule_option(char *line, Rule *rule_ds)
 	char *value_ptr = NULL;
 	char *options_save_ptr = NULL;
 	char *option_save_ptr = NULL;
-	
-	regex_t regex;
-	int regex_compilation_err;
-	
+		
 	options_ptr = strtok_r(line, ";", &options_save_ptr);
 	
 	while(options_ptr != NULL)
@@ -534,16 +551,15 @@ int populate_rule_option(char *line, Rule *rule_ds)
 		{
 			strcpy(rule_ds->content, value_buffer);
 		}
-		else if (strcmp(option_buffer, "regex") == 0)
+		else if (strcmp(option_buffer, "pcre") == 0)
 		{
-			regex_compilation_err = regcomp(&regex, value_buffer, 0);
-			if (regex_compilation_err)
-			{
-				fprintf(stderr, "Could not compile regex\n");
-				return -1;
-			}
 			
-			strcpy(rule_ds->regex, value_buffer);
+			if(!is_pcre_in_rules_valid(value_buffer))
+			{
+				fprintf(stderr, "Could not compile pcre\n");
+				return -1;
+			}	
+			strcpy(rule_ds->pcre, value_buffer);
 		}
 		else
 		{
@@ -596,8 +612,13 @@ bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 	bool ip_match = false;
 	bool port_match = false;
 	unsigned char *payload_ptr = NULL;
-	regex_t regex;
+	
+	pcre *regex;
 	int regex_result;
+	const char *regex_err;
+	int regex_err_offset;
+	int ovector[OVECCOUNT];
+	
 
 	// Header match	
 	
@@ -688,19 +709,24 @@ bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 		}
 	}
 	
-	if (rule_header_match && strlen(rules_ds->regex) > 0)
+	if (rule_header_match && strlen(rules_ds->pcre) > 0)
 	{
+
+		regex = pcre_compile(rules_ds->pcre, 0, &regex_err, &regex_err_offset, NULL);
+		regex_result = pcre_exec(regex, NULL, (char*)payload_ptr, strlen((char*)payload_ptr), 0, 0, ovector, OVECCOUNT);
 		
-		regcomp(&regex, rules_ds->regex, 0);
-		regex_result = regexec(&regex, (char*)payload_ptr, 0, NULL, 0);
-		if (regex_result == 0)
+		
+		if (regex_result < 0)
 		{
-			syslog(LOG_DEBUG, rules_ds->msg);
+			pcre_free(regex);
+			return false;
 		}
+		syslog(LOG_DEBUG, rules_ds->msg);
+		pcre_free(regex);
 		return true;
 	}	
 	
-	if (rule_header_match && strlen(rules_ds->content) == 0 && strlen(rules_ds->regex) == 0)
+	if (rule_header_match && strlen(rules_ds->content) == 0 && strlen(rules_ds->pcre) == 0)
 	{
 		syslog(LOG_DEBUG, rules_ds->msg);
 		return true;				
