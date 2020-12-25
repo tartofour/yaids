@@ -39,6 +39,7 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <syslog.h>
+#include <regex.h>
 //#include <time.h>
 //#include <zlib.h>
 #include "populate.h"
@@ -70,6 +71,7 @@ struct ids_rule
 	int port_dst;
 	char content[STR_MAX_SIZE];
 	char msg[STR_MAX_SIZE];
+	char regex[STR_MAX_SIZE];
    // int count;
    // time_t seconds;
 	
@@ -136,17 +138,12 @@ void print_help(char * prg_name)
 	char *authors = "Jonathan Rasque & Benjamin Verjus";
 	char *github_repo = "https://github.com/tartofour/yaids";
 	char *pcap_version = "libpcap version 1.9.1";
-	char *pcre_version = "Using PCRE version: 8.44 2020-02-12";
-	char *zlib_version = "Using ZLIB version: 1.2.11";
 	
 	printf("\n   .-. \t\t-*> Yaids! <*-\n");
 	printf("  (o o)\t\tVersion %s\n", version);
 	printf("  | O \\\t\tBy %s\n", authors);
 	printf("   \\   \\ \tGithub : %s\n", github_repo);
-	printf("    `~~~' \tUsing libpcap version: %s\n", pcap_version);
-	printf("\t\tUsing PCRE version: %s\n", pcre_version);
-	printf("\t\tUsing ZLIB version: %s\n\n", zlib_version);
-	
+	printf("    `~~~' \tUsing libpcap version: %s\n\n", pcap_version);
 	printf("USAGE : %s <rules_file> [interface]\n\n", prg_name);
 	printf("OPTION : -h, display this message\n");
 	printf("\n");
@@ -180,6 +177,10 @@ void print_rules(Rule *rules, int count)
 		{
 			printf("Content : %s\n", rules[i].content);
 		}		
+		if (strlen(rules[i].regex) > 0)
+		{
+			printf("Regex : %s\n", rules[i].regex);
+		}	
 		printf("\n");
 	}
 }
@@ -197,20 +198,6 @@ void initialize_http_message_struct(Http_msg message)
 	message.body = NULL;
 }
 
-void initialize_rule_struct(Rule *rule)
-{
-	memset(rule->action, '\0', ACTION_LEN_STR);
-	memset(rule->protocol, '\0', PROTOCOL_LEN_STR);
-	memset(rule->ip_src, '\0', IP_ADDR_LEN_STR);
-	memset(rule->direction, '\0', DIRECTION_LEN_STR);
-	memset(rule->ip_dst, '\0', IP_ADDR_LEN_STR);
-	memset(rule->content, '\0', STR_MAX_SIZE);
-	memset(rule->msg, '\0', STR_MAX_SIZE);
-	rule->port_src = -1;
-	rule->port_dst = -1;
-	//rule->count = -1;
-	//rule->seconds = -1;
-}
 
 void remove_char_from_str(char *new_str, char *str, char char_to_remove)
 {	
@@ -448,13 +435,14 @@ Rule* rules_malloc(int count)
 	
 	for(i=0; i<count; i++)
 	{
-		memset(ptr->action, 0, ACTION_LEN_STR);
-		memset(ptr->protocol, 0, PROTOCOL_LEN_STR);
-		memset(ptr->ip_src, 0, IP_ADDR_LEN_STR);
-		memset(ptr->direction, 0, DIRECTION_LEN_STR);
-		memset(ptr->ip_dst, 0, IP_ADDR_LEN_STR);
-		memset(ptr->content, 0, STR_MAX_SIZE);
-		memset(ptr->msg, 0, STR_MAX_SIZE);
+		memset(ptr->action, '\0', ACTION_LEN_STR);
+		memset(ptr->protocol, '\0', PROTOCOL_LEN_STR);
+		memset(ptr->ip_src, '\0', IP_ADDR_LEN_STR);
+		memset(ptr->direction, '\0', DIRECTION_LEN_STR);
+		memset(ptr->ip_dst, '\0', IP_ADDR_LEN_STR);
+		memset(ptr->content, '\0', STR_MAX_SIZE);
+		memset(ptr->msg, '\0', STR_MAX_SIZE);
+		memset(ptr->regex, '\0', STR_MAX_SIZE);
 		ptr->port_src = -1;
 		ptr->port_dst = -1;
 	}
@@ -520,6 +508,9 @@ int populate_rule_option(char *line, Rule *rule_ds)
 	char *options_save_ptr = NULL;
 	char *option_save_ptr = NULL;
 	
+	regex_t regex;
+	int regex_compilation_err;
+	
 	options_ptr = strtok_r(line, ";", &options_save_ptr);
 	
 	while(options_ptr != NULL)
@@ -534,7 +525,7 @@ int populate_rule_option(char *line, Rule *rule_ds)
 		
 		remove_char_from_str(option_buffer, option_ptr, ' ');
 		remove_char_from_str(value_buffer, value_ptr, '"');
-
+			
 		if (strcmp(option_buffer, "msg") == 0)
 		{
 			strcpy(rule_ds->msg, value_buffer);
@@ -542,6 +533,17 @@ int populate_rule_option(char *line, Rule *rule_ds)
 		else if (strcmp(option_buffer, "content") == 0)
 		{
 			strcpy(rule_ds->content, value_buffer);
+		}
+		else if (strcmp(option_buffer, "regex") == 0)
+		{
+			regex_compilation_err = regcomp(&regex, value_buffer, 0);
+			if (regex_compilation_err)
+			{
+				fprintf(stderr, "Could not compile regex\n");
+				return -1;
+			}
+			
+			strcpy(rule_ds->regex, value_buffer);
 		}
 		else
 		{
@@ -594,6 +596,8 @@ bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 	bool ip_match = false;
 	bool port_match = false;
 	unsigned char *payload_ptr = NULL;
+	regex_t regex;
+	int regex_result;
 
 	// Header match	
 	
@@ -670,7 +674,7 @@ bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 	
 	if (rule_header_match && strcmp(frame->payload_protocol, "https") == 0)
 	{
-		syslog(LOG_DEBUG, "HTTPS detected, can't afford content check ...");
+		syslog(LOG_DEBUG, "HTTPS detected...");
 		return true;
 	}
 
@@ -684,7 +688,19 @@ bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 		}
 	}
 	
-	if (rule_header_match == true && strlen(rules_ds->content) == 0)
+	if (rule_header_match && strlen(rules_ds->regex) > 0)
+	{
+		
+		regcomp(&regex, rules_ds->regex, 0);
+		regex_result = regexec(&regex, (char*)payload_ptr, 0, NULL, 0);
+		if (regex_result == 0)
+		{
+			syslog(LOG_DEBUG, rules_ds->msg);
+		}
+		return true;
+	}	
+	
+	if (rule_header_match && strlen(rules_ds->content) == 0 && strlen(rules_ds->regex) == 0)
 	{
 		syslog(LOG_DEBUG, rules_ds->msg);
 		return true;				
