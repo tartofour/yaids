@@ -62,20 +62,6 @@ void print_udp_header(UDP_Datagram *datagram)
     printf("\n");
 }
 
-void print_arp_header(ARP_Packet *packet)
-{
-    printf("Hardware Type : %d\n", packet->hw_type);
-	printf("Protocol Layer 3 : %d\n", packet->proto_layer3);
-	printf("Hardware Address Length : %d\n", packet->hw_addr_len);
-	printf("Protocol Address Length : %d\n", packet->proto_layer3_addr_len);
-	printf("Operation : %d\n", packet->operation);
-	//printf("Sender Hardware Address : %d\n", packet->);
-	//printf("Sender Internet Address : %d\n", packet->);
-	//printf("Target Hardware Address : %d\n", packet->);
-	//printf("Target Internet Address : %d\n", packet->);
-	printf("\n");
-}	
-
 void print_icmp_header(ICMP_Msg *message)
 {
     printf("Type : %d\n", message->type);
@@ -243,22 +229,18 @@ int populate_packet_ds(const struct pcap_pkthdr *header, const u_char *packet, E
 			{
 		 		strcpy(custom_frame->payload_protocol, "https");
 			}
-		  	
 		  	if(strstr((char*)custom_segment.data, "HTTP/1.1") != NULL || strstr((char*)custom_segment.data, "HTTP/1.2") != NULL || strstr((char*)custom_segment.data, "HTTP/2") != NULL)
 			{
 				strcpy(custom_frame->payload_protocol, "http");
 			}
-			
 			if(strstr((char*)custom_segment.data, "SSH-2.0-OpenSSH") != NULL)
 			{
 				strcpy(custom_frame->payload_protocol, "ssh");
 			}
-			
 			if(strstr((char*)custom_segment.data, "220 (vsFTPd ") != NULL)
 			{
 				strcpy(custom_frame->payload_protocol, "ftp");
 			}
-		  	
 		}
 	}
 	return 0;

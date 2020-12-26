@@ -1,65 +1,18 @@
-/* TODO : 
-
- * 	- TCP SYN attack
- * 		
- * 		- creer un tableau de structure syn_requests qui contient l'ip src, 
- * 		  l'ip dest, et timestamp
- * 			- ajouter tout les packet tcp qui arrivnet (.
- * 		- realloc le tableau à chaque paquet TCP syn qui entre
- * 		- define un threshold
- * 
- * 	- ARP spoofing
- * 		- tableau arp_request
- * 
- * 	- Comment détecter si payload chiffré ?
- * 
- * 	- XSS detector / injection SQL
- * 		⁻ regex pcre ?
- * 
- 
- * 
- * 	- DHCP
- * 	- DNS
-
- * 	- SMB
- * 	- TLS
- * 	- RDP
- * 	- SNMP
- * 	- telnet
- * 				
- * 
- */	
-
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ifaddrs.h>
-#include <errno.h>
 #include <stdbool.h>
 #include <syslog.h>
 #include <pcre.h>
-//#include <time.h>
-//#include <zlib.h>
 #include "populate.h"
 
 #define ACTION_LEN_STR 14
 #define PROTOCOL_LEN_STR 15
 #define IP_ADDR_LEN_STR 16
 #define DIRECTION_LEN_STR 3
-
-#define HTTP_VERSION_LEN 20
-#define HTTP_STATUS_LEN 20
-#define HTTP_METHOD_LEN 10
-#define HTTP_MSG_TYPE_LEN 9
-#define HTTP_HOST_LEN 255
-#define HTTP_CONTENT_TYPE_LEN 255
-#define HTTP_ENCODING_LEN 50
-
 #define STR_MAX_SIZE 255
 #define ARGS_MAX_SIZE 255
-
 #define OVECCOUNT 30
 
 struct ids_rule
@@ -74,24 +27,8 @@ struct ids_rule
 	char content[STR_MAX_SIZE];
 	char msg[STR_MAX_SIZE];
 	char pcre[STR_MAX_SIZE];
-   // int count;
-   // time_t seconds;
 	
 } typedef Rule;
-
-struct http_message
-{
-	char version[HTTP_VERSION_LEN];
-	int status; 
-	char method[HTTP_METHOD_LEN]; // POST, GET		
-	char msg_type[HTTP_MSG_TYPE_LEN];
-	char host[HTTP_HOST_LEN];
-	char content_type[HTTP_CONTENT_TYPE_LEN];
-	char encoding[HTTP_ENCODING_LEN]; // gzip - deflate - ...
-	int body_len;
-	unsigned char *body;
-	
-} typedef Http_msg;
 
 struct pcap_arguments
 {
@@ -100,39 +37,26 @@ struct pcap_arguments
 	
 } typedef Pcap_args;
 
-/*
-int check_syn_flood(struct packet_syn, ETHER_Frame *frame, time_t capture_time)
+Rule* rules_malloc(int count)
 {
+	Rule* ptr = (Rule *) malloc(sizeof(Rule) * count);
+	int i;
 	
+	for(i=0; i<count; i++)
+	{
+		memset(ptr->action, '\0', ACTION_LEN_STR);
+		memset(ptr->protocol, '\0', PROTOCOL_LEN_STR);
+		memset(ptr->ip_src, '\0', IP_ADDR_LEN_STR);
+		memset(ptr->direction, '\0', DIRECTION_LEN_STR);
+		memset(ptr->ip_dst, '\0', IP_ADDR_LEN_STR);
+		memset(ptr->content, '\0', STR_MAX_SIZE);
+		memset(ptr->msg, '\0', STR_MAX_SIZE);
+		memset(ptr->pcre, '\0', STR_MAX_SIZE);
+		ptr->port_src = -1;
+		ptr->port_dst = -1;
+	}
+	return ptr;
 }
-
-*/
-
-/*
-int gzip_inflate(char *compr, int comprLen, char *uncompr, int uncomprLen)
-{
-	int err;
-	z_stream d_stream; // decompression stream 
-
-	d_stream.zalloc = (alloc_func)0;
-	d_stream.zfree = (free_func)0;
-	d_stream.opaque = (voidpf)0;
-
-	d_stream.next_in  = (unsigned char *)compr;
-	d_stream.avail_in = comprLen;
-
-	d_stream.next_out = (unsigned char *)uncompr;
-	d_stream.avail_out = uncomprLen;
-
-	err = inflateInit2(&d_stream, 16+MAX_WBITS);
-	if (err != Z_OK) return err;
-
-	while (err != Z_STREAM_END) err = inflate(&d_stream, Z_NO_FLUSH);
-
-	err = inflateEnd(&d_stream);
-	return err;
-}
-*/
 
 void print_help(char * prg_name)
 {
@@ -149,7 +73,6 @@ void print_help(char * prg_name)
 	printf("USAGE : %s <rules_file> [interface]\n\n", prg_name);
 	printf("OPTION : -h, display this message\n");
 	printf("\n");
-	
 }
 
 void print_error(char * err_str)
@@ -171,35 +94,12 @@ void print_rules(Rule *rules, int count)
 		printf("Direction : %s\n", rules[i].direction);
 		printf("Destination IP : %s\n", rules[i].ip_dst);
 		printf("Destination Port : %d\n", rules[i].port_dst);
-		if (strlen(rules[i].msg) > 0)
-		{
-			printf("Msg : %s\n", rules[i].msg);
-		}
-		if (strlen(rules[i].content) > 0)
-		{
-			printf("Content : %s\n", rules[i].content);
-		}		
-		if (strlen(rules[i].pcre) > 0)
-		{
-			printf("PCRE : %s\n", rules[i].pcre);
-		}	
+		printf("Msg : %s\n", rules[i].msg);
+		printf("Content : %s\n", rules[i].content);
+		printf("PCRE : %s\n", rules[i].pcre);	
 		printf("\n");
 	}
 }
-
-void initialize_http_message_struct(Http_msg message)
-{
-	memset(message.version, 0, HTTP_VERSION_LEN);
-	memset(message.method, 0, HTTP_METHOD_LEN);
-	memset(message.msg_type, 0, HTTP_MSG_TYPE_LEN);
-	memset(message.host, 0, HTTP_HOST_LEN);
-	memset(message.content_type, 0, HTTP_CONTENT_TYPE_LEN);
-	memset(message.encoding, 0, HTTP_ENCODING_LEN);
-	message.status = -1;
-	message.body_len = -1;
-	message.body = NULL;
-}
-
 
 void remove_char_from_str(char *new_str, char *str, char char_to_remove)
 {	
@@ -244,11 +144,9 @@ bool is_protocol_in_rules_valid(char *protocol)
 bool is_ip_in_rules_valid(char *ip)
 {
 	char ip_buffer[1000];
-	
 	char *ip_field;
 	char *ip_field_error;
 	char *ip_field_save_ptr;
-	
 	int byte;
 	int byte_nb;
 	
@@ -258,7 +156,6 @@ bool is_ip_in_rules_valid(char *ip)
 	}
 	
 	strcpy(ip_buffer, ip);
-	
 	ip_field = strtok_r(ip_buffer, ".", &ip_field_save_ptr);
 	byte_nb = 0;
 
@@ -270,7 +167,6 @@ bool is_ip_in_rules_valid(char *ip)
 		{
 			return false;
 		}
-		
 		byte_nb++;
 		ip_field = strtok_r(NULL, ".", &ip_field_save_ptr);
 	}
@@ -279,7 +175,6 @@ bool is_ip_in_rules_valid(char *ip)
 	{
 		return false;
 	}
-	
 	return true;	
 }
 
@@ -335,8 +230,6 @@ bool is_port_match(int rule_port, int capture_port)
 	return false;
 }
 
-
-
 void check_interface_validity(char *choosen_interface_name)
 {
 	struct ifaddrs *ifa, *ifa_tmp;
@@ -367,19 +260,16 @@ int check_args_validity(int argc, char * argv[])
 	   print_help(argv[0]);
 	   exit(EXIT_SUCCESS);
 	}
-
 	if (strcmp(argv[1], "-h") == 0)
 	{
 	   print_help(argv[0]);
 	   exit(EXIT_SUCCESS);
 	}
-
 	if (argc < 2 || argc > 3)
 	{
 		print_error("nombre d'arguments invalides");
 		exit(EXIT_FAILURE);
 	}
-	
 	if (argc == 2)
 	{
 		if (strlen(argv[1]+1) > ARGS_MAX_SIZE)
@@ -388,7 +278,6 @@ int check_args_validity(int argc, char * argv[])
 			exit(EXIT_FAILURE);
 		}
 	}
-	
 	if (argc == 3)
 	{
 		if (strlen(argv[1]+1) > ARGS_MAX_SIZE || strlen(argv[2]+1) > ARGS_MAX_SIZE)
@@ -396,10 +285,7 @@ int check_args_validity(int argc, char * argv[])
 			print_error("limite de caractères dépassée par un ou plusieurs arguments");
 			exit(EXIT_FAILURE);
 		}
-		
 	}
-
- 
 	return 0;
 }
 
@@ -413,7 +299,6 @@ void assign_default_interface(char *device)
 		print_error("Aucun interface détecté sur la machine");
 		exit(EXIT_FAILURE);   
 	}
-
 	strcpy(device, interfaces->name);
 }
 
@@ -423,7 +308,6 @@ void assign_interface(int argc, char *argv[], char *device)
 	{
 		assign_default_interface(device);
 	}
-	
 	if (argc == 3)
 	{
 		check_interface_validity(argv[2]);
@@ -446,28 +330,6 @@ int count_file_lines(FILE* file)
 	}
 	rewind(file);
 	return count_lines;
-}
-
-Rule* rules_malloc(int count)
-{
-	Rule* ptr = (Rule *) malloc(sizeof(Rule) * count);
-	int i;
-	
-	for(i=0; i<count; i++)
-	{
-		memset(ptr->action, '\0', ACTION_LEN_STR);
-		memset(ptr->protocol, '\0', PROTOCOL_LEN_STR);
-		memset(ptr->ip_src, '\0', IP_ADDR_LEN_STR);
-		memset(ptr->direction, '\0', DIRECTION_LEN_STR);
-		memset(ptr->ip_dst, '\0', IP_ADDR_LEN_STR);
-		memset(ptr->content, '\0', STR_MAX_SIZE);
-		memset(ptr->msg, '\0', STR_MAX_SIZE);
-		memset(ptr->pcre, '\0', STR_MAX_SIZE);
-		ptr->port_src = -1;
-		ptr->port_dst = -1;
-	}
-	
-	return ptr;
 }
 
 int populate_rule_header(char *line, Rule *rule_ds)
@@ -549,14 +411,17 @@ int populate_rule_option(char *line, Rule *rule_ds)
 		}
 		else if (strcmp(option_buffer, "content") == 0)
 		{
+			if(strcmp(rule_ds->protocol, "ftp") == 0 || strcmp(rule_ds->protocol, "ssh") == 0 || strcmp(rule_ds->protocol, "icmp") == 0)
+			{
+				return -1;
+			}
 			strcpy(rule_ds->content, value_buffer);
+			
 		}
 		else if (strcmp(option_buffer, "pcre") == 0)
 		{
-			
-			if(!is_pcre_in_rules_valid(value_buffer))
+			if(strcmp(rule_ds->protocol, "ftp") == 0 || strcmp(rule_ds->protocol, "ssh") == 0 || strcmp(rule_ds->protocol, "icmp") == 0 || !is_pcre_in_rules_valid(value_buffer))
 			{
-				fprintf(stderr, "Could not compile pcre\n");
 				return -1;
 			}	
 			strcpy(rule_ds->pcre, value_buffer);
@@ -585,7 +450,6 @@ int read_rules(FILE *rules_file, Rule *rules_ds, int count)
 	for(line_nb=0; line_nb<count; line_nb++)
 	{
 		getline(&rule_line, &rule_line_len, rules_file);
-		
 		header_ptr = strtok_r(rule_line, "(", &saveptr);
 		option_ptr = strtok_r(NULL, ")", &saveptr);
 
@@ -601,7 +465,6 @@ int read_rules(FILE *rules_file, Rule *rules_ds, int count)
 		{
 			return line_nb+1;
 		}
-		
 	}
 	return 0;
 }
@@ -611,14 +474,13 @@ bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 	bool rule_header_match = false;
 	bool ip_match = false;
 	bool port_match = false;
-	unsigned char *payload_ptr = NULL;
+	u_char *payload_ptr = NULL;
 	
 	pcre *regex;
 	int regex_result;
 	const char *regex_err;
 	int regex_err_offset;
 	int ovector[OVECCOUNT];
-	
 
 	// Header match	
 	
@@ -698,7 +560,6 @@ bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 		syslog(LOG_DEBUG, "HTTPS detected...");
 		return true;
 	}
-
 	
 	if (rule_header_match && strlen(rules_ds->content) > 0)
 	{
@@ -711,10 +572,8 @@ bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 	
 	if (rule_header_match && strlen(rules_ds->pcre) > 0)
 	{
-
 		regex = pcre_compile(rules_ds->pcre, 0, &regex_err, &regex_err_offset, NULL);
-		regex_result = pcre_exec(regex, NULL, (char*)payload_ptr, strlen((char*)payload_ptr), 0, 0, ovector, OVECCOUNT);
-		
+		regex_result = pcre_exec(regex, NULL, (char*)payload_ptr, strlen((char*)payload_ptr), 0, 0, ovector, OVECCOUNT);	
 		
 		if (regex_result < 0)
 		{
@@ -725,7 +584,6 @@ bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 		pcre_free(regex);
 		return true;
 	}	
-	
 	if (rule_header_match && strlen(rules_ds->content) == 0 && strlen(rules_ds->pcre) == 0)
 	{
 		syslog(LOG_DEBUG, rules_ds->msg);
@@ -735,10 +593,8 @@ bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 	return false;
 }
 
-
 void my_packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 {
-	
 	ETHER_Frame frame;
 	Pcap_args *params;
 	Rule *rules;
@@ -752,19 +608,15 @@ void my_packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_c
 	rules = params->rules_ptr;
 	
 	populate_packet_ds(header, packet, &frame);
-
 	
 	for (i=0; i<rules_total_nb && !frame_match_rules; i++)
 	{
 		frame_match_rules = rules_matcher(&rules[i], &frame);	
 	}
-	
-	//check_syn_flood(struct packet_syn, &frame, header->ts.tv_sec)
 }
 
 int main(int argc, char *argv[])
 {
-
 	FILE *rules_file;
 	Rule *rules;
 	pcap_t * handle;

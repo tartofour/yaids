@@ -28,7 +28,6 @@ struct sniff_ethernet
 	u_short ether_type; /* IP? ARP? RARP? etc */
 };
 
-
 /* ARP packet */
 struct sniff_arp {
 	u_short arp_htype;
@@ -59,7 +58,6 @@ struct sniff_ip
 	u_short ip_sum;         /* checksum */
 	struct in_addr ip_src,ip_dst; /* source and dest address */
 };
-
 
 /* ICMP header */
 struct sniff_icmp 
@@ -109,7 +107,6 @@ struct sniff_tcp {
         u_short th_urp;         /* urgent pointer */
 };
 
-
 struct custom_icmp
 {
 	int type;
@@ -150,19 +147,6 @@ struct custom_ip
 	ICMP_Msg icmp_data;
 
 } typedef IP_Packet;
-
-struct custom_arp
-{
-	int hw_type;
-	int proto_layer3;
-	int hw_addr_len;
-	int proto_layer3_addr_len;
-	int operation;
-	u_char source_mac[6];
-	u_char source_proto_addr[4];
-	u_char arp_dst[6];
-	u_char arp_dst_proto_addr[4];
-} typedef ARP_Packet;
 
 struct custom_ethernet
 {

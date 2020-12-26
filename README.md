@@ -19,6 +19,7 @@
     - **main.c**
 		- [struct ids_rule](#struct-ids_rule)
 		- [struct pcap_arguments](#struct-pcap-arguments)
+		- [Rule* rules_malloc(int count);](#rules-malloc)
 		- [void print_help(char *prg_name);](#print-help)
 		- [void print_error(char *err_str);](#print-error)
 		- [void print_rules(Rule *rules, int count);](#print-rules)
@@ -28,6 +29,7 @@
 		- [bool is_ip_in_rules_valid(char *ip);](#is-ip-in-rules)
 		- [bool is_port_in_rules_valid(char *port);](#is-port-in-rules)
 		- [bool is_direction_in_rules_valid(char *direction);](#is-direction)
+		- [bool is_pcre_in_rules_valid(char *regex);](#is-pcre)
 		- [bool is_ip_match(char* rules_ip, char* captured_ip);](#is-ip-match)
 		- [bool is_port_match(int rule_port, int capture_port);](#is-port-match)
 		- [void check_interface_validity(char *choosen_interface_name);](#check-interface)
@@ -35,7 +37,6 @@
 		- [void assign_default_interface(char *device);](#assign-default-int)
 		- [void assign_interface(int argc, char *argv[], char *device);](#assign-int)
 		- [int count_file_lines(FILE* file);](#count-lines)
-		- [Rule* rules_malloc(int count);](#rules-malloc)
 		- [int populate_rule_header(char *line, Rule *rule_ds);](#populate-header)
 		- [int populate_rule_option(char *line, Rule *rule_ds);](#populate-option)
 		- [int read_rules(FILE *rules_file, Rule *rules_ds, int count);](#read-rules)
@@ -65,17 +66,15 @@
 		- [struct custom_udp](#custom-udp)
 		- [struct custom_tcp](#custom-tcp)
 		- [struct custom_ip](#custom-ip)
-		- [struct custom_arp](#custom-arp)
 		- [struct custom_ethernet](#custom-eth)
 
 # Démarrage rapide
 ## Dépendances
 
-Afin d'être en mesure de compiler le code source, le packet `libcap-dev` doit être installé sur la machine hôte.  
-Pour install lib-cap:
+Afin d'être en mesure de compiler le code source, les packets `libcap-dev`, `libpcre3-dev` doivent être installé sur la machine hôte. De plus, le packet `git` est nécessaire pour cloner ce dépôt :
 
 ```bash
-# apt update && apt install -y libcap-dev
+# apt update && apt install -y libcap-dev libpcre3-dev git
 ```
 
 ## Installation
@@ -127,14 +126,18 @@ Permet de définir le protocole sur lequel s'applique la règle. `yaids` prend e
 ## Options de règles
 Yaids prend en charge deux type d'options :
 - `content` qui permet de rechercher une chaine de caractère dans le payload d'un paquet.
-- `msg` qui permet de définir la chaine de caractère à écrire dans le journal du système lors d'un match. 
+- `pcre` qui permet de rechercher une expression régulière dans le payload d'un paquet.
+- `msg` qui permet de définir la chaine de caractère à écrire dans le journal du système lors d'un match.
+
 
 # Documentation du code source
 ## main.c
 
 #### <a name="struct-ids-rule">struct ids_rule</a>
+Description : 
+- Cette structure permet de stocker les différentes règles qui seront comparées aux paquets capturés par libpcap.
 
-```
+``` C
 struct ids_rule
 {
 	char action[ACTION_LEN_STR];
@@ -146,19 +149,24 @@ struct ids_rule
 	int port_dst;
 	char content[STR_MAX_SIZE];
 	char msg[STR_MAX_SIZE];
+	char pcre[STR_MAX_SIZE];
 	
-} typedef Rule; 
+} typedef Rule;
 ```
 
-Description : 
-- Cette structure permet de stocker les différentes règles qui seront comparées aux paquets capturés par libpcap.
+
 
 * * *
 
 #### <a name="struct-pcap-arguments">struct pcap_arguments</a>
 
+Description : 
+- Cette structure permet de stocker des arguments supplémentaires à envoyer à my_packet_handler lors de l'appel à la fonction `pcap_loop`.
+Pour faire fonctionner `my_packet_handler` correctement, nous avions besoin de lui fournir deux arguments supplémentaires depuis notre fonction main, à savoir un pointeur vers le tableau d'instance Rule et le nombre total de règles.
+La fonction `pcap_loop` ne peut cependant prendre qu'un seul argument personnalisé.
+Pour permettre d'envoyer les deux paramètres, nous avons décidé de créer une structure et d'utiliser cette structure comme argument.
 
-```
+``` C
 struct pcap_arguments
 {
 	int rules_counter;
@@ -167,14 +175,21 @@ struct pcap_arguments
 } typedef Pcap_args;
 ```
 
-Description : 
-- Cette structure permet de stocker des arguments supplémentaires à envoyer à my_packet_handler lors de l'appel à la fonction `pcap_loop`.
-Pour faire fonctionner `my_packet_handler` correctement, nous avions besoin de lui fournir deux arguments supplémentaires depuis notre fonction main, à savoir un pointeur vers le tableau d'instance Rule et le nombre total de règles.
-La fonction `pcap_loop` ne peut cependant prendre qu'un seul argument personnalisé.
-Pour permettre d'envoyer les deux paramètres, nous avons décidé de créer une structure et d'utiliser cette structure comme argument.
-
 * * * 
 
+#### <a name="count-lines">Rule* rules_malloc(int count);</a>
+
+Description :
+- Réserve en mémoire l'espace nécessaire afin de stocker les différentes structures de règle. Initialise également ces structures.
+
+Argument : 
+- `int count` : Nombre de structure Rules à créer.
+
+``` C
+
+```
+
+* * * 
 
 #### <a name="print-help">void print_help(char * prg_name);</a>
 
@@ -183,15 +198,42 @@ Description :
 
 Argument : 
 - `char *prg_name` : Nom du programme
+
+``` C
+void print_help(char * prg_name)
+{
+	char *version = "1.201222";
+	char *authors = "Jonathan Rasque & Benjamin Verjus";
+	char *github_repo = "https://github.com/tartofour/yaids";
+	char *pcap_version = "libpcap version 1.9.1";
+	
+	printf("\n   .-. \t\t-*> Yaids! <*-\n");
+	printf("  (o o)\t\tVersion %s\n", version);
+	printf("  | O \\\t\tBy %s\n", authors);
+	printf("   \\   \\ \tGithub : %s\n", github_repo);
+	printf("    `~~~' \tUsing libpcap version: %s\n\n", pcap_version);
+	printf("USAGE : %s <rules_file> [interface]\n\n", prg_name);
+	printf("OPTION : -h, display this message\n");
+	printf("\n");
+}
+```
 * * *
 
 #### <a name="print-error">void print_error(char * err_str);</a>
 
 Description :
-- Affiche un message d'erreur.
+- Affiche un message d'erreur sur la sortie standard d'erreur.
 
 Argument : 
 - `char *err_str` : Chaine de caractère à afficher à l'écran
+
+```
+void print_error(char * err_str)
+{
+	fprintf(stderr, "Erreur : %s\n", err_str);
+}
+```
+
 * * *
 
 #### <a name="print-rules"> void print_rules(Rule *rules, int count);</a>
@@ -202,6 +244,29 @@ Description :
 Argument : 
 - `Rule *rules` : Tableau d'instances rules.
 - `int count` : Nombre d'instances rules dans le tableau.
+
+``` C
+void print_rules(Rule *rules, int count)
+{
+	int i;
+	
+	for (i=0; i<count; i++)
+	{
+		printf("Rules n°%d\n", i);
+		printf("Action : %s\n", rules[i].action);
+		printf("Protocol : %s\n", rules[i].protocol);
+		printf("Source IP : %s\n", rules[i].ip_src);
+		printf("Source Port : %d\n", rules[i].port_src);
+		printf("Direction : %s\n", rules[i].direction);
+		printf("Destination IP : %s\n", rules[i].ip_dst);
+		printf("Destination Port : %d\n", rules[i].port_dst);
+		printf("Msg : %s\n", rules[i].msg);
+		printf("Content : %s\n", rules[i].content);
+		printf("PCRE : %s\n", rules[i].pcre);	
+		printf("\n");
+	}
+}
+```
 
 * * *
 
@@ -215,6 +280,25 @@ Arguments :
 - `char *str` : Chaine de caractère à parcourir.
 - `char char_to_remove` : Caractère à supprimer.
 
+``` C
+void remove_char_from_str(char *new_str, char *str, char char_to_remove)
+{	
+	int i = 0;
+	int j = 0;
+	
+	while (str[i] != '\0')
+	{
+		if (str[i] != char_to_remove)
+		{
+			new_str[j] = str[i];
+			j++;
+		}		
+		i++;
+	}
+	new_str[j] = '\0';
+}
+```
+
 * * *
 
 #### <a name="is-action">bool is_action_in_rule_valid(char *action);</a>
@@ -225,6 +309,18 @@ Description :
 Argument : 
 - `char *action` : Chaine de caractère à analyser.
 
+```
+bool is_action_in_rules_valid(char *action_str)
+{
+	if(strcmp(action_str, "alert") == 0)
+	{   
+		return true;
+	}   
+	return false;
+}
+
+```
+
 * * *
 
 #### <a name="is-proto">bool is_protocol_in_rules_valid(char *protocol);</a>
@@ -234,6 +330,22 @@ Description :
 
 Argument : 
 - `char *protocol` : Chaine de caractère à analyser
+
+``` C
+bool is_protocol_in_rules_valid(char *protocol)
+{
+	if(strcmp(protocol, "http") == 0 ||
+		strcmp(protocol, "tcp") == 0 ||
+		strcmp(protocol, "udp") == 0 ||
+		strcmp(protocol, "icmp") == 0 ||
+		strcmp(protocol, "ssh") == 0 ||
+		strcmp(protocol, "ftp") == 0)
+		
+		return true;
+		
+	return false;
+}
+```
 
 * * *
 
@@ -246,6 +358,45 @@ Argument :
 - `char *ip` : Chaine de caractère à analyser.
 * * *
 
+``` C
+bool is_ip_in_rules_valid(char *ip)
+{
+	char ip_buffer[1000];
+	char *ip_field;
+	char *ip_field_error;
+	char *ip_field_save_ptr;
+	int byte;
+	int byte_nb;
+	
+	if(strcmp(ip, "any") == 0)
+	{
+		return true;
+	}
+	
+	strcpy(ip_buffer, ip);
+	ip_field = strtok_r(ip_buffer, ".", &ip_field_save_ptr);
+	byte_nb = 0;
+
+	while (ip_field != NULL)
+	{
+		byte = strtol(ip_field, &ip_field_error, 10);
+
+		if(byte < 0 || byte > 255 || *ip_field_error != '\0')
+		{
+			return false;
+		}
+		byte_nb++;
+		ip_field = strtok_r(NULL, ".", &ip_field_save_ptr);
+	}
+	
+	if(byte_nb != 4)
+	{
+		return false;
+	}
+	return true;	
+}
+```
+
 #### <a name="is-port-in-rules">bool is_port_in_rules_valid(char *port);</a>
 
 Description :
@@ -253,6 +404,17 @@ Description :
 
 Argument : 
 - `char *port` : Chaine de caractère à analyser
+
+``` C
+bool is_port_in_rules_valid(char *port)
+{	
+	if (strcmp(port, "any") == 0 || (atoi(port) >= 1 && atoi(port) <= 65535))
+	{
+		return true;
+	}  
+	return false; 
+}    
+```
 
 * * *
 
@@ -263,6 +425,43 @@ Description :
 
 Argument : 
 - `char *direction` : Chaine de caractère à analyser.
+
+``` C
+bool is_direction_in_rules_valid(char *direction)
+{
+	if(strcmp(direction, "->") == 0 || strcmp(direction, "<-") == 0)
+	{
+		return true;
+	}	
+	return false;
+}
+```
+* * * 
+#### <a name="is-pcre-in-rules">bool is_pcre_in_rules_valid(char *regex);</a>
+
+Description : 
+- aze
+Argument : 
+- aze
+- qsd
+
+``` C
+bool is_pcre_in_rules_valid(char *regex)
+{
+	pcre *compiled_pcre = NULL;
+	const char *error ;
+	int error_offset;
+	
+	compiled_pcre = pcre_compile(regex, 0, &error, &error_offset, NULL);
+	if (compiled_pcre == NULL)
+	{
+		pcre_free(compiled_pcre);
+		return false;
+	}
+	pcre_free(compiled_pcre);
+	return true;
+}
+```
 
 * * *
 
@@ -275,6 +474,17 @@ Argument :
 - `char *rules_ip` : IP source ou destination stockée dans une structure règle.
 - `char *captured_ip` : IP à comparer.
 
+``` C
+bool is_ip_match(char* rules_ip, char* captured_ip)
+{
+	if (strcmp(rules_ip, "any") == 0 || strcmp(rules_ip, captured_ip) == 0)
+	{
+		return true;
+	}
+	return false;
+}
+```
+
 * * *
 
 #### <a name="is-port-match">bool is_port_match(int rule_port, int capture_port);</a>
@@ -286,6 +496,17 @@ Argument :
 - `char *rules_port` : Port source ou destination stocké dans une structure règle.
 - `int captured_port` : Port à comparer.
 
+``` C
+bool is_port_match(int rule_port, int capture_port)
+{
+	if (rule_port == 0 || rule_port == capture_port)
+	{
+		return true;
+	}
+	return false;
+}
+```
+
 * * * 
 
 #### <a name="check-interface">void check_interface_validity(char *choosen_interface_name);</a>
@@ -295,6 +516,31 @@ Description :
 
 Argument : 
 - `char *choosen_interface_name` : Nom de l'interface à vérifier.
+
+``` C
+void check_interface_validity(char *choosen_interface_name)
+{
+	struct ifaddrs *ifa, *ifa_tmp;
+
+	if (getifaddrs(&ifa) == -1)
+	{
+		print_error("aucun interface détecté sur la machine");
+		exit(EXIT_FAILURE);
+	}
+
+	for (ifa_tmp = ifa; ifa_tmp; ifa_tmp = ifa_tmp->ifa_next)
+	{
+		if (strcmp(ifa_tmp->ifa_name,choosen_interface_name) == 0 && \
+			ifa_tmp->ifa_addr->sa_family==AF_INET)
+		{
+			freeifaddrs(ifa);
+			return;
+		}
+	}
+	print_error("interface non trouvé sur la machine");
+	exit(EXIT_FAILURE);
+}
+```
 
 * * * 
 
@@ -307,6 +553,44 @@ Arguments :
 - `int argc` : Nombre d'arguments.
 - `char * argv[]` : Tableau chaine de caractère contenant les arguments.
 
+``` C
+int check_args_validity(int argc, char * argv[])
+{
+	if (argc == 1)
+	{
+	   print_help(argv[0]);
+	   exit(EXIT_SUCCESS);
+	}
+	if (strcmp(argv[1], "-h") == 0)
+	{
+	   print_help(argv[0]);
+	   exit(EXIT_SUCCESS);
+	}
+	if (argc < 2 || argc > 3)
+	{
+		print_error("nombre d'arguments invalides");
+		exit(EXIT_FAILURE);
+	}
+	if (argc == 2)
+	{
+		if (strlen(argv[1]+1) > ARGS_MAX_SIZE)
+		{
+			print_error("limite de caractères dépassée par l'argument");
+			exit(EXIT_FAILURE);
+		}
+	}
+	if (argc == 3)
+	{
+		if (strlen(argv[1]+1) > ARGS_MAX_SIZE || strlen(argv[2]+1) > ARGS_MAX_SIZE)
+		{
+			print_error("limite de caractères dépassée par un ou plusieurs arguments");
+			exit(EXIT_FAILURE);
+		}
+	}
+	return 0;
+}
+```
+
 * * * 
 
 #### <a name="assign-default-int">void assign_default_interface(char *device);</a>
@@ -316,6 +600,21 @@ Description :
 
 Argument : 
 - `char *device` : Pointeur vers un chaine de caractère contenant le nom de l'interface qui utilisé par pcaplib lors de la capture.
+
+``` C
+void assign_default_interface(char *device)
+{
+	pcap_if_t *interfaces;
+	char error[PCAP_ERRBUF_SIZE];
+	
+	if(pcap_findalldevs(&interfaces,error)==-1)
+	{
+		print_error("Aucun interface détecté sur la machine");
+		exit(EXIT_FAILURE);   
+	}
+	strcpy(device, interfaces->name);
+}
+```
 
 * * * 
 
@@ -329,19 +628,52 @@ Argument :
 - `char * argv[]` : Tableau chaines de caractères contenant les arguments.
 - `char *device` : Pointeur vers un chaine de caractère contenant le nom de l'interface utilisé par pcaplib lors de la capture.
 
+``` C
+void assign_interface(int argc, char *argv[], char *device)
+{
+	if (argc == 2)
+	{
+		assign_default_interface(device);
+	}
+	if (argc == 3)
+	{
+		check_interface_validity(argv[2]);
+		strcpy(device, argv[2]);
+	}	
+}
+```
 * * * 
 
-#### <a name="count-lines">Rule* rules_malloc(int count);</a>
+#### <a name="count-file-lines">int count_file_lines(FILE* file);</a>
 
 Description :
-- Réserve en mémoire l'espace nécessaire afin de stocker les différentes structures de règle. Initialise également ces structures.
+- aaa
 
-Argument : 
-- `int count` : Nombre de structure Rules à créer.
+Arguments : 
+- aaa
 
+``` C
+int count_file_lines(FILE* file)
+{
+	int count_lines = 0;
+	char character = getc(file);
+
+	while (character != EOF)
+	{
+		if (character == '\n')
+		{
+			count_lines++;
+		}
+		character = getc(file);
+	}
+	rewind(file);
+	return count_lines;
+}
+```
 * * * 
 
-#### <a name="populate-header">int populate_rule_header(char *line, Rule *rule_ds);</a>
+
+#### <a name="populate-rule-header">int populate_rule_header(char *line, Rule *rule_ds);</a>
 
 Description :
 - Divise une ligne du fichier de règle et remplit les champs d'entête d'une struture Rule avec les valeurs obtenues. La fonction vérifie que ces données soient bien valides avec de peupler la structure.
@@ -350,9 +682,59 @@ Arguments :
 - `char *line` : Ligne du fichier de règles à parcourir.
 - `Rule *rule_ds` : structure Rule à peupler.
 
+``` C
+int populate_rule_header(char *line, Rule *rule_ds)
+{
+	char *saveptr = NULL;
+	char *action_ptr = NULL;
+	char *protocol_ptr = NULL;
+	char *ip_src_ptr = NULL;
+	char *port_src_ptr = NULL;
+	char *direction_ptr = NULL;
+	char *ip_dst_ptr = NULL;
+	char *port_dst_ptr = NULL;
+	char *error_ptr = NULL;
+	
+	action_ptr = strtok_r(line, " ", &saveptr);
+	protocol_ptr = strtok_r(NULL, " ", &saveptr);
+	ip_src_ptr = strtok_r(NULL, " ", &saveptr);
+	port_src_ptr = strtok_r(NULL, " ", &saveptr);
+	direction_ptr = strtok_r(NULL, " ", &saveptr);
+	ip_dst_ptr = strtok_r(NULL, " ", &saveptr);
+	port_dst_ptr = strtok_r(NULL, " ", &saveptr);
+	error_ptr = strtok_r(NULL, " ", &saveptr);
+
+	if (error_ptr != NULL || action_ptr == NULL || protocol_ptr == NULL || ip_src_ptr == NULL || port_src_ptr == NULL || direction_ptr == NULL || ip_dst_ptr == NULL || port_dst_ptr == NULL)
+	{
+		return -1;
+	}
+	
+	int action_valid = is_action_in_rules_valid(action_ptr);
+	int protocol_valid = is_protocol_in_rules_valid(protocol_ptr);
+	int direction_valid = is_direction_in_rules_valid(direction_ptr);
+	int ip_addresses_valid = is_ip_in_rules_valid(ip_src_ptr) && is_ip_in_rules_valid(ip_dst_ptr);
+	int ports_valid = is_port_in_rules_valid(port_src_ptr) && is_port_in_rules_valid(port_dst_ptr); 
+	
+	if (!action_valid || !protocol_valid || !direction_valid || !ip_addresses_valid || !ports_valid)
+	{
+		return -1;
+	}
+
+	strcpy(rule_ds->action, action_ptr);
+	strcpy(rule_ds->protocol, protocol_ptr);
+	strcpy(rule_ds->direction, direction_ptr);
+	strcpy(rule_ds->ip_src, ip_src_ptr);
+	strcpy(rule_ds->ip_dst, ip_dst_ptr);
+	rule_ds->port_src = atoi(port_src_ptr);
+	rule_ds->port_dst = atoi(port_dst_ptr);
+		
+	 return 0;
+}
+```
+
 * * * 
 
-#### <a name="populate-option">int populate_rule_option(char *line, Rule *rule_ds);</a>
+#### <a name="populate-rule-option">int populate_rule_option(char *line, Rule *rule_ds);</a>
 
 Description :
 - Divise une ligne du fichier de règle et remplit les champs d'option d'une struture Rule avec les valeurs obtenues. La fonction vérifie que ces données soient valides avec de peupler la structure.
@@ -360,6 +742,64 @@ Description :
 Arguments : 
 - `char *line` : Ligne du fichier de règles à parcourir.
 - `Rule *rule_ds` : structure Rule à peupler.
+
+``` C
+int populate_rule_option(char *line, Rule *rule_ds)
+{
+	char option_buffer[1000];
+	char value_buffer[1000];
+	char *options_ptr = NULL;
+	char *option_ptr = NULL;
+	char *value_ptr = NULL;
+	char *options_save_ptr = NULL;
+	char *option_save_ptr = NULL;
+		
+	options_ptr = strtok_r(line, ";", &options_save_ptr);
+	
+	while(options_ptr != NULL)
+	{
+		option_ptr = strtok_r(options_ptr, ":", &option_save_ptr);
+		value_ptr = strtok_r(NULL, ";", &option_save_ptr);
+		
+		if(option_ptr == NULL || value_ptr == NULL)
+		{
+			return -1;
+		}
+		
+		remove_char_from_str(option_buffer, option_ptr, ' ');
+		remove_char_from_str(value_buffer, value_ptr, '"');
+			
+		if (strcmp(option_buffer, "msg") == 0)
+		{
+			strcpy(rule_ds->msg, value_buffer);
+		}
+		else if (strcmp(option_buffer, "content") == 0)
+		{
+			if(strcmp(rule_ds->protocol, "ftp") == 0 || strcmp(rule_ds->protocol, "ssh") == 0 || strcmp(rule_ds->protocol, "icmp") == 0)
+			{
+				return -1;
+			}
+			strcpy(rule_ds->content, value_buffer);
+			
+		}
+		else if (strcmp(option_buffer, "pcre") == 0)
+		{
+			if(strcmp(rule_ds->protocol, "ftp") == 0 || strcmp(rule_ds->protocol, "ssh") == 0 || strcmp(rule_ds->protocol, "icmp") == 0 || !is_pcre_in_rules_valid(value_buffer))
+			{
+				return -1;
+			}	
+			strcpy(rule_ds->pcre, value_buffer);
+		}
+		else
+		{
+			return -1;
+		}
+		
+		options_ptr = strtok_r(NULL, ";", &options_save_ptr);
+	}
+	return 0;
+}
+```
 
 * * * 
 
@@ -373,6 +813,41 @@ Arguments :
 - `Rule *rule_ds` : Pointeur vers le tableau de structures Rule à peupler.
 - `int count` : Nombre de ligne présentes dans le fichier de règles. 
 
+``` C
+int read_rules(FILE *rules_file, Rule *rules_ds, int count)
+{
+	int line_nb;
+	int header_correctly_populate = -1;
+	int option_correctly_populate = -1;
+	char *option_ptr = NULL;
+	char *header_ptr = NULL;
+	char *saveptr = NULL;
+	char *rule_line = NULL;
+	size_t rule_line_len = 0;
+
+	for(line_nb=0; line_nb<count; line_nb++)
+	{
+		getline(&rule_line, &rule_line_len, rules_file);
+		header_ptr = strtok_r(rule_line, "(", &saveptr);
+		option_ptr = strtok_r(NULL, ")", &saveptr);
+
+		if (header_ptr == NULL || option_ptr == NULL)
+		{
+			return line_nb+1;
+		}
+		
+		header_correctly_populate = populate_rule_header(header_ptr, &rules_ds[line_nb]);
+		option_correctly_populate = populate_rule_option(option_ptr, &rules_ds[line_nb]);
+		 
+		if (header_correctly_populate != 0 || option_correctly_populate != 0)
+		{
+			return line_nb+1;
+		}
+	}
+	return 0;
+}
+```
+
 * * * 
 
 #### <a name="rules-matcher">bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame);</a>
@@ -383,6 +858,133 @@ Description :
 Arguments : 
 - `Rule *rule_ds` : Pointeur vers la structures Rule à comparer.
 - `ETHER_Frame *frame` : Pointeur vers la structure custom_ethernet contenant la trame capturée.
+
+``` C
+bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
+{
+	bool rule_header_match = false;
+	bool ip_match = false;
+	bool port_match = false;
+	u_char *payload_ptr = NULL;
+	
+	pcre *regex;
+	int regex_result;
+	const char *regex_err;
+	int regex_err_offset;
+	int ovector[OVECCOUNT];
+
+	// Header match	
+	
+	if (strcmp(frame->payload_protocol,"tcp") == 0 && strcmp(rules_ds->protocol,"tcp") == 0)
+	{	
+		ip_match = is_ip_match(rules_ds->ip_src, frame->ip_data.source_ip) && is_ip_match(rules_ds->ip_dst, frame->ip_data.destination_ip);
+		port_match = is_port_match(rules_ds->port_src, frame->ip_data.tcp_data.source_port) && is_port_match(rules_ds->port_dst, frame->ip_data.tcp_data.destination_port);
+		if(ip_match && port_match)
+		{
+			rule_header_match = true;
+			payload_ptr = frame->ip_data.tcp_data.data;
+		}
+	}
+	
+	if (strcmp(rules_ds->protocol,"http") == 0)
+	{
+		if (strcmp(frame->payload_protocol,"http") == 0) 
+		{
+			ip_match = is_ip_match(rules_ds->ip_src, frame->ip_data.source_ip) && is_ip_match(rules_ds->ip_dst, frame->ip_data.destination_ip);
+			port_match = is_port_match(rules_ds->port_src, frame->ip_data.tcp_data.source_port) && is_port_match(rules_ds->port_dst, frame->ip_data.tcp_data.destination_port);
+			if(ip_match && port_match)
+			{
+				rule_header_match = true;
+				payload_ptr = frame->ip_data.tcp_data.data;
+			}
+		}
+		if (strcmp(frame->payload_protocol,"https") == 0)
+		{
+			ip_match = is_ip_match(rules_ds->ip_src, frame->ip_data.source_ip) && is_ip_match(rules_ds->ip_dst, frame->ip_data.destination_ip);
+			rule_header_match = true;
+		}
+	}	
+	if (strcmp(frame->payload_protocol,"ftp") == 0 && strcmp(rules_ds->protocol,"ftp") == 0)
+	{	
+				
+		ip_match = is_ip_match(rules_ds->ip_src, frame->ip_data.source_ip) && is_ip_match(rules_ds->ip_dst, frame->ip_data.destination_ip);
+		port_match = is_port_match(rules_ds->port_src, frame->ip_data.tcp_data.source_port) && is_port_match(rules_ds->port_dst, frame->ip_data.tcp_data.destination_port);
+		if(ip_match && port_match)
+		{
+			rule_header_match = true;
+			payload_ptr = frame->ip_data.tcp_data.data;
+		}
+	}	
+	if (strcmp(frame->payload_protocol,"ssh") == 0 && strcmp(rules_ds->protocol,"ssh") == 0)
+	{	
+		ip_match = is_ip_match(rules_ds->ip_src, frame->ip_data.source_ip) && is_ip_match(rules_ds->ip_dst, frame->ip_data.destination_ip);
+		port_match = is_port_match(rules_ds->port_src, frame->ip_data.tcp_data.source_port) && is_port_match(rules_ds->port_dst, frame->ip_data.tcp_data.destination_port);
+		if(ip_match && port_match)
+		{
+			rule_header_match = true;
+			payload_ptr = frame->ip_data.tcp_data.data;
+		}
+	}
+	if(strcmp(frame->payload_protocol,"udp") == 0 && strcmp(rules_ds->protocol,"udp") == 0)
+	{	
+		ip_match = is_ip_match(rules_ds->ip_src, frame->ip_data.source_ip) && is_ip_match(rules_ds->ip_dst, frame->ip_data.destination_ip);
+		port_match = is_port_match(rules_ds->port_src, frame->ip_data.tcp_data.source_port) && is_port_match(rules_ds->port_dst, frame->ip_data.tcp_data.destination_port);
+		if(ip_match && port_match)
+		{
+			rule_header_match = true;
+			payload_ptr = frame->ip_data.udp_data.data;
+		}
+	}
+	if (strcmp(frame->payload_protocol,"icmp") == 0 && strcmp(rules_ds->protocol,"icmp") == 0)
+	{
+		ip_match = is_ip_match(rules_ds->ip_src, frame->ip_data.source_ip) && is_ip_match(rules_ds->ip_dst, frame->ip_data.destination_ip);
+		if(ip_match)
+		{
+			rule_header_match = true;
+		}
+	}
+		
+	// Option(s) match	
+	
+	if (rule_header_match && strcmp(frame->payload_protocol, "https") == 0)
+	{
+		syslog(LOG_DEBUG, "HTTPS detected...");
+		return true;
+	}
+	
+	if (rule_header_match && strlen(rules_ds->content) > 0)
+	{
+		if (strstr((char*)payload_ptr, rules_ds->content))
+		{
+			syslog(LOG_DEBUG, rules_ds->msg);
+			return true;
+		}
+	}
+	
+	if (rule_header_match && strlen(rules_ds->pcre) > 0)
+	{
+		regex = pcre_compile(rules_ds->pcre, 0, &regex_err, &regex_err_offset, NULL);
+		regex_result = pcre_exec(regex, NULL, (char*)payload_ptr, strlen((char*)payload_ptr), 0, 0, ovector, OVECCOUNT);	
+		
+		if (regex_result < 0)
+		{
+			pcre_free(regex);
+			return false;
+		}
+		syslog(LOG_DEBUG, rules_ds->msg);
+		pcre_free(regex);
+		return true;
+	}	
+	if (rule_header_match && strlen(rules_ds->content) == 0 && strlen(rules_ds->pcre) == 0)
+	{
+		syslog(LOG_DEBUG, rules_ds->msg);
+		return true;				
+	}
+	
+	return false;
+}
+
+```
 
 * * * 
 
@@ -395,12 +997,89 @@ Arguments :
 - `u_char *args` : Pointeur vers une structures contenant les valeurs supplémentaire à in.
 - `ETHER_Frame *frame` : Pointeur vers la structure custom_ethernet contenant la trame capturée.
 
+``` C
+void my_packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
+{
+	ETHER_Frame frame;
+	Pcap_args *params;
+	Rule *rules;
+	int rules_total_nb;
+	int frame_match_rules;
+	int i;
+	
+	frame_match_rules = 0;
+	params = (Pcap_args*) args;
+	rules_total_nb = params->rules_counter;
+	rules = params->rules_ptr;
+	
+	populate_packet_ds(header, packet, &frame);
+	
+	for (i=0; i<rules_total_nb && !frame_match_rules; i++)
+	{
+		frame_match_rules = rules_matcher(&rules[i], &frame);	
+	}
+}
+```
+
 * * * 
 
 #### <a name="main">int main(int argc, char *argv[]);</a>
 Description : 
 - Fonction principalement permettant :
 	- dddddd
+
+``` C
+int main(int argc, char *argv[])
+{
+	FILE *rules_file;
+	Rule *rules;
+	pcap_t * handle;
+	
+	char device[STR_MAX_SIZE];
+	char err_msg[STR_MAX_SIZE];
+	char error_buffer[PCAP_ERRBUF_SIZE];
+
+	int rules_file_lines_count = 0;
+	int error_in_line = -1;
+	
+	check_args_validity(argc, argv);
+	assign_interface(argc, argv, device);
+	printf("Interface sélectionné : %s\n", device);
+	
+	rules_file = fopen(argv[1], "r");
+	if(rules_file == NULL)
+	{
+		print_error("le fichier rules n'existe pas");
+		exit(EXIT_FAILURE);
+	}
+	
+	rules_file_lines_count = count_file_lines(rules_file);
+	rules = rules_malloc(rules_file_lines_count);
+	printf("Nb de ligne dans le fichier %s : %d\n", argv[1], rules_file_lines_count);
+
+	error_in_line = read_rules(rules_file, rules, rules_file_lines_count);
+	if (error_in_line != 0)
+	{
+		sprintf(err_msg, "Erreur de configuration dans le fichier rules ligne %d", error_in_line);
+		print_error(err_msg);
+		exit(EXIT_FAILURE);
+	}
+	
+	fclose(rules_file);
+	print_rules(rules, rules_file_lines_count);
+
+	handle = pcap_create(device, error_buffer);
+	pcap_set_timeout(handle,10);
+	pcap_activate(handle);
+	int total_packet_count = -1;
+	Pcap_args args = {rules_file_lines_count, rules};
+	
+	pcap_loop(handle, total_packet_count, (pcap_handler) my_packet_handler, (u_char *) &args); // doit aussi prendre le tableau de structure RULES
+	free(rules);
+	return EXIT_SUCCESS;
+}
+
+```
 
 * * *
 
@@ -414,6 +1093,19 @@ Arguments :
 - `unsigned int ip` : IP représenté avec le type entier.
 - `char ip_addr[]` : Chaine de caractère à remplir après la conversion.
 
+``` C
+void generate_ip(unsigned int ip, char ip_addr[])
+{
+    unsigned char bytes[4];
+    bytes[0] = ip & 0xFF;
+    bytes[1] = (ip >> 8) & 0xFF;
+    bytes[2] = (ip >> 16) & 0xFF;
+    bytes[3] = (ip >> 24) & 0xFF;
+    snprintf(ip_addr,IP_ADDR_LEN_STR,
+        "%d.%d.%d.%d", bytes[0], bytes[1], bytes[2], bytes[3]); 
+}
+```
+
 * * *
 
 #### <a name="print-payload">void print_payload(int payload_length, unsigned char *payload);</a>
@@ -425,6 +1117,23 @@ Arguments :
 - `int payload_length` : Longueur du payload.
 - `unsigned char *payload` : Pointeur vers le payload.
 
+``` C
+void print_payload(int payload_length, unsigned char *payload)
+{
+	if (payload_length > 0) 
+    {
+        const u_char *temp_pointer = payload;
+        int byte_count = 0;
+        while (byte_count++ < payload_length) 
+        {
+            printf("%c", (char)*temp_pointer);
+            temp_pointer++;
+        }
+        printf("\n");
+    }
+}
+```
+
 * * * 
 
 #### <a name="print-ethernet-header">void print_ethernet_header(ETHER_Frame *frame);</a>
@@ -434,6 +1143,16 @@ Description :
 
 Arguments : 
 - `ETHER_Frame *frame` : Pointeur vers une trame ethernet.
+
+``` C
+void print_ethernet_header(ETHER_Frame *frame)
+{
+    printf("Source MAC : %s\n", frame->source_mac);
+	printf("Destination MAC : %s\n", frame->source_mac);
+    printf("Ethertype : %d\n", frame->ethertype);
+    printf("\n");
+}
+```
 
 * * * 
 
@@ -445,6 +1164,16 @@ Description :
 Arguments : 
 - `IP_Packet *packet` : Pointeur vers un packet IP.
 
+``` C
+void print_ip_header(IP_Packet *packet)
+{
+    printf("Source IP : %s\n", packet->source_ip);
+	printf("Destination IP : %s\n", packet->destination_ip);
+    printf("Layer 4 protocol : %d\n", packet->protocol);
+    printf("\n");
+}
+```
+
 * * * 
 
 #### <a name="print-tcp-header">void print_tcp_header(TCP_Segment *segment);</a>
@@ -454,6 +1183,19 @@ Description :
 
 Arguments : 
 - `TCP_Segment *segment` : Pointeur vers un segment TCP.
+
+``` C
+void print_tcp_header(TCP_Segment *segment)
+{
+    printf("Source Port : %d\n", segment->source_port);
+	printf("Destination Port : %d\n", segment->destination_port);
+	printf("Sequence Number : %d\n", segment->sequence_number);
+	printf("ACK number : %d\n", segment->ack_number);
+	printf("Flag : %d\n", segment->flag);
+    printf("Data Length : %d\n", segment->data_length);
+    printf("\n");
+}
+```
 
 * * * 
 
@@ -465,15 +1207,15 @@ Description :
 Arguments : 
 - `UDP_Datagram *datagram` : Pointeur vers un datagramme UDP.
 
-* * *
-
-#### <a name="print-arp-header">void print_arp_header(ARP_Packet *packet);</a>
-
-Description :
-- Permet d'afficher le contenu d'un entête ARP.
-
-Arguments : 
-- `ARP_Packet *packet` : Pointeur vers un paquet ARP.
+``` C
+void print_udp_header(UDP_Datagram *datagram)
+{
+    printf("Source Port : %d\n", datagram->source_port);
+	printf("Destination Port : %d\n", datagram->destination_port);
+    printf("Data Length : %d\n", datagram->data_length);
+    printf("\n");
+}
+```
 
 * * *
 
@@ -484,6 +1226,10 @@ Description :
 
 Arguments : 
 - `ICMP_Msg *message` : Pointeur vers un message ICMP.
+
+``` C
+
+```
 
 * * * 
 
@@ -496,6 +1242,183 @@ Arguments :
 - `const struct pcap_pkthdr *header` : Pointeur permettant d'accéder aux informations relatives au paquet brute capturé par pcaplib.
 - `const u_char *packet` : Pointeur vers le paquet brute capturé par pcaplib.
 - `ETHER_Frame *custom_frame` : Pointeur vers la structure custom_ethernet à peupler.
+
+``` C
+int populate_packet_ds(const struct pcap_pkthdr *header, const u_char *packet, ETHER_Frame *custom_frame)
+{
+	const struct sniff_ethernet *ethernet; /* The ethernet header */
+	//const struct sniff_arp *arp; /* The IP header */
+	const struct sniff_ip *ip; /* The IP header */
+	const struct sniff_icmp *icmp; /*The ICMP header */
+	const struct sniff_tcp *tcp; /* The TCP header */
+	const struct sniff_udp *udp; /*The UDP header */
+	unsigned char *payload = NULL; /* Packet payload */
+
+	u_int size_ip;
+	u_int size_tcp;
+	u_int size_udp;
+	
+	ethernet = (struct sniff_ethernet*)(packet);
+	char src_mac_address[ETHER_ADDR_LEN_STR];
+	char dst_mac_address[ETHER_ADDR_LEN_STR];
+
+	// Convert unsigned char MAC to string MAC
+	for(int x=0;x<6;x++)
+	{       snprintf(src_mac_address+(x*2),ETHER_ADDR_LEN_STR,
+					"%02x",ethernet->ether_shost[x]);
+			snprintf(dst_mac_address+(x*2),ETHER_ADDR_LEN_STR,
+					"%02x",ethernet->ether_dhost[x]);
+	}
+
+	strcpy(custom_frame->source_mac,src_mac_address);
+	strcpy(custom_frame->destination_mac, dst_mac_address);
+	custom_frame->frame_size = header->caplen;
+	custom_frame->ethertype = ethernet->ether_type;
+	//print_ethernet_header(custom_frame);
+   
+	// ARP
+	
+	if(ntohs(ethernet->ether_type) == ETHERTYPE_ARP) 
+	{
+		printf("--------------\n");
+		printf("ARP packet: %d\n",custom_frame->ethertype);	
+		
+		custom_frame->ethertype = ARP;
+		
+		//arp = (struct sniff_arp*)(packet + SIZE_ETHERNET);
+		//ARP_Packet custom_arp_packet;
+		   
+		strcpy(custom_frame->payload_protocol, "arp");
+		
+		//print_ethernet_header(ethernet);
+
+	}
+	
+		
+		
+		//IP
+	if(ntohs(ethernet->ether_type) == ETHERTYPE_IP) 
+	{
+		printf("--------------\n");
+		printf("IPV4 packet: %d\n",custom_frame->ethertype);
+
+		custom_frame->ethertype = IPV4;
+		
+		ip = (struct sniff_ip*)(packet + SIZE_ETHERNET);
+		IP_Packet custom_packet;
+	   
+		char src_ip[IP_ADDR_LEN_STR];
+		char dst_ip[IP_ADDR_LEN_STR];
+		generate_ip(ip->ip_src.s_addr,src_ip);
+		generate_ip(ip->ip_dst.s_addr,dst_ip);
+
+		strcpy(custom_packet.source_ip,src_ip);
+		strcpy(custom_packet.destination_ip, dst_ip);
+		custom_packet.protocol = ip->ip_p; 
+
+		//print_ip_header(&custom_packet);
+
+		size_ip = IP_HL(ip)*4;
+
+		if (size_ip < 20) 
+		{
+			printf("   * Invalid IP header length: %u bytes\n", size_ip);
+			return ERROR;
+		}
+		
+		if((int)ip->ip_p==ICMP_PROTOCOL)
+		{
+			printf("ICMP Handling\n");
+
+			icmp = (struct sniff_icmp*)(packet + SIZE_ETHERNET + size_ip);
+			ICMP_Msg custom_icmp_msg;
+			
+			custom_icmp_msg.type = ntohs(icmp->icmp_type);
+			custom_icmp_msg.code = ntohs(icmp->icmp_code);
+			custom_icmp_msg.id = ntohs(icmp->icmp_id);
+			custom_icmp_msg.sequence = ntohs(icmp->icmp_sequence);
+			
+			custom_packet.icmp_data = custom_icmp_msg;
+			custom_frame->ip_data = custom_packet;
+			strcpy(custom_frame->payload_protocol, "icmp");
+			
+			//print_icmp_header(&custom_icmp_msg);
+		}
+		
+		if((int)ip->ip_p==UDP_PROTOCOL)
+		{
+			
+			printf("UDP Handling\n");
+			udp = (struct sniff_udp*)(packet + SIZE_ETHERNET + size_ip);	
+			UDP_Datagram custom_udp_packet;				
+			
+			size_udp = (int)udp->uh_ulen;
+			
+			payload = (u_char *)(packet + SIZE_ETHERNET + size_ip + size_udp);
+			
+			custom_udp_packet.source_port = ntohs(udp->uh_sport);
+			custom_udp_packet.destination_port = ntohs(udp->uh_dport);
+			custom_udp_packet.data = payload;
+			custom_udp_packet.data_length = udp->uh_ulen;
+			strcpy(custom_frame->payload_protocol, "udp");
+						
+			custom_packet.udp_data = custom_udp_packet;
+			custom_frame->ip_data = custom_packet;
+			
+			//print_udp_header(&custom_udp_packet);
+		}
+		
+		if((int)ip->ip_p==TCP_PROTOCOL)
+		{
+			printf("TCP Handling\n");
+			tcp = (struct sniff_tcp*)(packet + SIZE_ETHERNET + size_ip);
+			TCP_Segment custom_segment;
+
+			size_tcp = TH_OFF(tcp)*4;
+
+			if (size_tcp < 20) {
+					printf("   * Invalid TCP header length: %u bytes\n", size_tcp);
+					return ERROR;
+			}
+			
+			payload = (u_char *)(packet + SIZE_ETHERNET + size_ip + size_tcp);
+
+			int payload_length = (header->len)-SIZE_ETHERNET-size_ip-size_tcp;
+			
+			custom_segment.source_port = ntohs(tcp->th_sport);
+			custom_segment.destination_port = ntohs(tcp->th_dport);
+			custom_segment.flag = (int)tcp->th_flags;
+			custom_segment.sequence_number = tcp->th_seq;
+			custom_segment.data = payload;
+			custom_segment.data_length = payload_length;
+
+			custom_packet.tcp_data = custom_segment;
+			custom_frame->ip_data = custom_packet;
+			strcpy(custom_frame->payload_protocol, "tcp");
+			
+			//print_tcp_header(&custom_segment);
+		  	
+			if(custom_frame->ip_data.tcp_data.source_port == 443 || custom_frame->ip_data.tcp_data.destination_port == 443)
+			{
+		 		strcpy(custom_frame->payload_protocol, "https");
+			}
+		  	if(strstr((char*)custom_segment.data, "HTTP/1.1") != NULL || strstr((char*)custom_segment.data, "HTTP/1.2") != NULL || strstr((char*)custom_segment.data, "HTTP/2") != NULL)
+			{
+				strcpy(custom_frame->payload_protocol, "http");
+			}
+			if(strstr((char*)custom_segment.data, "SSH-2.0-OpenSSH") != NULL)
+			{
+				strcpy(custom_frame->payload_protocol, "ssh");
+			}
+			if(strstr((char*)custom_segment.data, "220 (vsFTPd ") != NULL)
+			{
+				strcpy(custom_frame->payload_protocol, "ftp");
+			}
+		}
+	}
+	return 0;
+}
+```
 
 * * *
 

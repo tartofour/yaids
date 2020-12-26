@@ -1,6 +1,6 @@
 alert udp any any -> any any (msg:"UDP traffic bind port is forbidden";)
 alert http 192.168.56.102 any -> any any (msg:"Default page detected"; pcre:"Thiss the delt welcome page";)
-alert ssh 192.168.56.102 any -> any any (msg:"SSH connexion to critical server detected";)
+alert ssh 192.168.56.102 any -> any any (msg:"SSH connexion to critical server detected"; content:"allo";)
 alert ftp any any -> any any (msg:"Unsecure protocol use detected";)
 alert tcp any any -> 192.168.0.1 any (msg:"Forbidden content detected";)
 alert icmp any any -> 192.168.56.102 any (msg:"Ping to critical server detected";)
