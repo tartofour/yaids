@@ -253,7 +253,7 @@ void check_interface_validity(char *choosen_interface_name)
 	exit(EXIT_FAILURE);
 }
 
-int check_args_validity(int argc, char * argv[])
+void check_args_validity(int argc, char * argv[])
 {
 	if (argc == 1)
 	{
@@ -286,7 +286,6 @@ int check_args_validity(int argc, char * argv[])
 			exit(EXIT_FAILURE);
 		}
 	}
-	return 0;
 }
 
 void assign_default_interface(char *device)
