@@ -39,7 +39,7 @@
 		- [int check_args_validity(int argc, char * argv[]);](#check-args)
 		- [void assign_default_interface(char *device);](#assign-default-int)
 		- [void assign_interface(int argc, char *argv[], char *device);](#assign-int)
-		- [int count_file_lines(FILE* file);](#count-lines)
+		- [int count_file_lines(FILE* file);](#count-file-lines)
 		- [int populate_rule_header(char *line, Rule *rule_ds);](#populate-rule-header)
 		- [int populate_rule_option(char *line, Rule *rule_ds);](#populate-rule-option)
 		- [int read_rules(FILE *rules_file, Rule *rules_ds, int count);](#read-rules)
