@@ -60,7 +60,7 @@ Rule* rules_malloc(int count)
 
 void print_help(char * prg_name)
 {
-	char *version = "1.201222";
+	char *version = "1.201231";
 	char *authors = "Jonathan Rasque & Benjamin Verjus";
 	char *github_repo = "https://github.com/tartofour/yaids";
 	char *pcap_version = "libpcap version 1.9.1";
@@ -143,7 +143,7 @@ bool is_protocol_in_rules_valid(char *protocol)
 
 bool is_ip_in_rules_valid(char *ip)
 {
-	char ip_buffer[1000];
+	char ip_buffer[STR_MAX_SIZE];
 	char *ip_field;
 	char *ip_field_error;
 	char *ip_field_save_ptr;
@@ -381,8 +381,8 @@ int populate_rule_header(char *line, Rule *rule_ds)
 
 int populate_rule_option(char *line, Rule *rule_ds)
 {
-	char option_buffer[1000];
-	char value_buffer[1000];
+	char option_buffer[STR_MAX_SIZE];
+	char value_buffer[STR_MAX_SIZE];
 	char *options_ptr = NULL;
 	char *option_ptr = NULL;
 	char *value_ptr = NULL;
@@ -630,7 +630,7 @@ int main(int argc, char *argv[])
 	
 	check_args_validity(argc, argv);
 	assign_interface(argc, argv, device);
-	printf("Interface sélectionné : %s\n", device);
+	//printf("Interface sélectionné : %s\n", device);
 	
 	rules_file = fopen(argv[1], "r");
 	if(rules_file == NULL)
@@ -641,7 +641,7 @@ int main(int argc, char *argv[])
 	
 	rules_file_lines_count = count_file_lines(rules_file);
 	rules = rules_malloc(rules_file_lines_count);
-	printf("Nb de ligne dans le fichier %s : %d\n", argv[1], rules_file_lines_count);
+	//printf("Nb de ligne dans le fichier %s : %d\n", argv[1], rules_file_lines_count);
 
 	error_in_line = read_rules(rules_file, rules, rules_file_lines_count);
 	if (error_in_line != 0)
@@ -652,7 +652,7 @@ int main(int argc, char *argv[])
 	}
 	
 	fclose(rules_file);
-	print_rules(rules, rules_file_lines_count);
+	//print_rules(rules, rules_file_lines_count);
 
 	handle = pcap_create(device, error_buffer);
 	pcap_set_timeout(handle,10);
