@@ -12,9 +12,12 @@
 - Démarrage rapide
     - [Dépendances](#d%C3%A9pendances)
     - [Installation](#installation)
-    - [Utilisation](#utilisation)
+    - [Lancement via le fichier exécutable](#lancement-via-le-fichier-exécutable)
+	- [Intégration au système GNU/Linux](#integration-au-systeme-gnu/linux)
+	- [Désinstallation](#désinstallation)
     - [Protocoles pris en charge](#protocoles-pris-en-charge)
     - [Options de règles](#options-de-règles)
+    - [Exemple de fichier de règles](#exemple-de-fichier-de-règles)
 - Documentation du code source
     - **main.c**
 		- [struct ids_rule](#struct-ids_rule)
@@ -88,13 +91,28 @@ $ cd yaids
 $ make
 ```
 
-### Intégration au système GNU/Linux
+## Lancement via le fichier exécutable
+
+Afin d'executer `yaids`, il est indispensable de lui fournir un fichier de règles.  
+Il est également recommandé de spécifier une interface d'écoute :
+
+```
+# ./yaids <rules_file> [interface]
+```
+
+## <a name="integration-au-systeme-gnu/linux">Intégration au système GNU/Linux</a>
 
 Pour ajouter automatiquement `yaids` dans le dossier `/usr/local/bin/` et pour l'intégrer à systemd, executez le script d'installation en temps qu'administrateur:
 
 ```
 # ./install.sh
 ```
+Vous pouvez désormais vérifier que le service est bien en marche :
+
+```
+# systemctl status yaids.service
+```
+Il est possible de modifier les règles utilisées par yaids via le fichier `/etc/rules.txt`. Il est nécessaire de redémarrer le service `yaids` à chaque modification de ce fichier.
 
 ## Désinstallation
 
@@ -102,15 +120,6 @@ Pour désinstaller yaids, executez le script de désinstallation en temps qu'adm
 
 ```
 # ./uninstall.sh
-```
-
-## Utilisation
-
-Afin d'executer `yaids`, il est indispensable de lui fournir un fichier de règles.  
-Il est également recommandé de spécifier une interface d'écoute :
-
-```
-# yaids <rules_file> [interface]
 ```
 
 ## Protocoles pris en charge
@@ -125,17 +134,27 @@ Permet de définir le protocole sur lequel s'applique la règle. `yaids` prend e
 
 ## Options de règles
 Yaids prend en charge deux type d'options :
-- `content` qui permet de rechercher une chaine de caractère dans le payload d'un paquet.
-- `pcre` qui permet de rechercher une expression régulière dans le payload d'un paquet.
-- `msg` qui permet de définir la chaine de caractère à écrire dans le journal du système lors d'un match.
+- `content` qui permet de rechercher une chaine de caractère dans le payload d'un paquet. Cette option est utilisable pour les protocoles `TCP`, `UDP` et `HTTP`.
+- `pcre` qui permet de rechercher une expression régulière dans le payload d'un paquet. Cette option est utilisable pour les protocoles `TCP`, `UDP` et `HTTP`.
+- `msg` qui permet de définir la chaine de caractère à écrire dans le journal du système lors d'un match. Cette option est utilisable pour tous les protocoles.
 
+## Exemple de fichier de règles
+``` bash
+alert udp any any -> any 9999 (msg:"UDP traffic bind port is forbidden";)
+alert http 192.168.56.102 any -> any any (msg:"XSS Attack detected"; pcre:"<script>alert.'[a-zA-Z]*'.<\/script>";)
+alert http 192.168.56.102 any -> any any (msg:"Default page detected"; content:"Apache2 Debian Default Page";)
+alert ssh 192.168.56.102 any -> any any (msg:"SSH connexion to critical server detected";)
+alert ftp any any -> any any (msg:"Unsecure protocol use detected";)
+alert tcp any any -> any 8888 (msg:"Backdoor attack";)
+alert icmp any any -> 192.168.56.102 any (msg:"Ping to critical server detected";)
+``` 
 
 # Documentation du code source
 ## main.c
 
 #### <a name="struct-ids-rule">struct ids_rule</a>
 Description : 
-- Cette structure permet de stocker les différentes règles qui seront comparées aux paquets capturés par libpcap.
+- Cette structure permet de stocker une règle qui sera par la suite comparé aux paquets capturés par libpcap.
 
 ``` C
 struct ids_rule
@@ -160,9 +179,11 @@ struct ids_rule
 
 Description : 
 - Cette structure permet de stocker des arguments supplémentaires à envoyer à la fonction `my_packet_handler` lors de l'appel de `pcap_loop`.
-Pour faire fonctionner `my_packet_handler` correctement, nous avions besoin de lui fournir deux arguments supplémentaires depuis notre fonction main, à savoir un pointeur vers le tableau d'instance Rule et le nombre total de règles.
+
+Choix d'implémentation :
+- Pour faire fonctionner `my_packet_handler` correctement, nous avions besoin de lui fournir deux arguments à savoir un pointeur vers le tableau d'instance Rule et le nombre total de règles.
 La fonction `pcap_loop` ne peut cependant prendre qu'un seul argument personnalisé.
-Nous avons donc décidé de créer une structure contenant nos arguments et d'utiliser cette structure comme argument.
+Pour contourner ce problème, nous avons donc décidé de créer une structure contenant nos deux arguments et d'utiliser un pointeur vers cette structure comme argument pour `pcap_loop`.
 
 ``` C
 struct pcap_arguments
@@ -178,13 +199,16 @@ struct pcap_arguments
 #### <a name="rules-malloc">Rule* rules_malloc(int count);</a>
 
 Description :
-- Réserve l'espace mémoire nécessaire au stockage de nos différentes structures `Rule` dans un tableau. La fonction initialise également les structures créées.
+- Réserve l'espace mémoire nécessaire au stockage des différentes structures `Rule` dans un tableau. La fonction initialise également les structures créées.
 
 Argument : 
 - `int count` : Nombre de structure Rules à créer.
 
 Valeur de retour : 
 - `Rule*` : Pointeur vers le début d'un tableau d'une ou plusieurs `Rule`.
+
+Choix d'implémentation :
+- Nous avons décidé d'initialiser la valeur des différents champs de nos structures `Rule` à l'aide de memset directement dans cette fonction. Celà nous permet d'éviter qu'il ne persiste des données parasites dans les différents champs des structures.
 
 ``` C
 Rule* rules_malloc(int count)
@@ -219,6 +243,9 @@ Description :
 Argument : 
 - `char *prg_name` : Nom du programme
 
+Choix d'implémentation :
+- Le nom du programme passé en argument permet d'afficher à l'utilisateur la commande exacte à utiliser pour faire fonctionnr l'IDS, et ce même si le nom du fichier binaire a été modifié. Pour réaliser ce menu d'aide, nous nous sommes inspiré du menu d'aide de `snort`.
+
 ``` C
 void print_help(char * prg_name)
 {
@@ -247,6 +274,8 @@ Description :
 Argument : 
 - `char *err_str` : Chaine de caractère à afficher à l'écran
 
+Choix d'implémentation :
+- Cette fonction nous permet de formater de manière homogène les erreurs obtenues lors de l'exécution du programme.
 
 ``` C
 void print_error(char * err_str)
@@ -265,6 +294,9 @@ Description :
 Argument : 
 - `Rule *rules` : Tableau d'instances rules.
 - `int count` : Nombre d'instances rules dans le tableau.
+
+Choix d'implémentation :
+- Cette fonction existe à des fins de débogage. 
 
 ``` C
 void print_rules(Rule *rules, int count)
@@ -301,6 +333,9 @@ Arguments :
 - `char *str` : Chaine de caractère à parcourir.
 - `char char_to_remove` : Caractère à supprimer.
 
+Choix d'implémentation :
+- Cette fonction nous a été utile à plusieurs reprises afin de "nettoyer" les chaines de caractères obtenues lors de la lecture du fichier de règles. Nous nous assurons de supprimer les caractères indésirables avant des les copier dans la structure de règle.
+
 ``` C
 void remove_char_from_str(char *new_str, char *str, char char_to_remove)
 {	
@@ -325,10 +360,13 @@ void remove_char_from_str(char *new_str, char *str, char char_to_remove)
 #### <a name="is-action">bool is_action_in_rule_valid(char *action);</a>
 Description :
 
-- Vérifie la validité de la valeur présente dans le champ `action` d'une ligne extraite du fichier de règle.
+- Vérifie la validité de la valeur présente dans le champ `action` d'une ligne extraite du fichier de règles.
 
 Argument : 
 - `char *action` : Chaine de caractère à analyser.
+
+Valeur de retour : 
+- `true` ou `false`
 
 ```
 bool is_action_in_rules_valid(char *action_str)
@@ -347,10 +385,13 @@ bool is_action_in_rules_valid(char *action_str)
 #### <a name="is-proto">bool is_protocol_in_rules_valid(char *protocol);</a>
 
 Description :
-- Vérifie la validité de la valeur présente dans le champ `protocole` d'une ligne extraite du fichier de règle.
+- Vérifie la validité de la valeur présente dans le champ `protocole` d'une ligne extraite du fichier de règles.
 
 Argument : 
 - `char *protocol` : Chaine de caractère à analyser
+
+Valeur de retour : 
+- `true` ou `false`
 
 ``` C
 bool is_protocol_in_rules_valid(char *protocol)
@@ -373,16 +414,18 @@ bool is_protocol_in_rules_valid(char *protocol)
 #### <a name="is-ip-in-rules">bool is_ip_in_rules_valid(char *ip);</a>
 
 Description :
-- Vérifie la validité de la valeur présente dans un des champs `ip` d'une ligne extraite du fichier de règle.
+- Vérifie la validité de la valeur présente dans un des champs `ip` d'une ligne extraite du fichier de règles.
 
 Argument : 
 - `char *ip` : Chaine de caractère à analyser.
-* * *
+
+Valeur de retour : 
+- `true` ou `false`
 
 ``` C
 bool is_ip_in_rules_valid(char *ip)
 {
-	char ip_buffer[1000];
+	char ip_buffer[STR_MAX_SIZE];
 	char *ip_field;
 	char *ip_field_error;
 	char *ip_field_save_ptr;
@@ -417,6 +460,7 @@ bool is_ip_in_rules_valid(char *ip)
 	return true;	
 }
 ```
+* * *
 
 #### <a name="is-port-in-rules">bool is_port_in_rules_valid(char *port);</a>
 
@@ -425,6 +469,9 @@ Description :
 
 Argument : 
 - `char *port` : Chaine de caractère à analyser
+
+Valeur de retour : 
+- `true` ou `false`
 
 ``` C
 bool is_port_in_rules_valid(char *port)
@@ -447,6 +494,9 @@ Description :
 Argument : 
 - `char *direction` : Chaine de caractère à analyser.
 
+Valeur de retour : 
+- `true` ou `false`
+
 ``` C
 bool is_direction_in_rules_valid(char *direction)
 {
@@ -461,10 +511,10 @@ bool is_direction_in_rules_valid(char *direction)
 #### <a name="is-pcre-in-rules-valid">bool is_pcre_in_rules_valid(char *regex);</a>
 
 Description :
-- Vérifie la validité de l'expression régulière présente dans le champ `pcre` d'une ligne extraite du fichier de règle. La fonction va tenter de compiler l'expression régulière pour déterminer si c'ette dernière est valide ou non.
+- Vérifie la validité de l'expression régulière présente dans le champ `pcre` d'une ligne extraite du fichier de règle. La fonction va tenter de compiler l'expression régulière pour déterminer si cette dernière est valide ou non.
 
 Argument : 
-- `char *direction` : Chaine de caractère à analyser.
+- `char *regex` : Chaine de caractère à analyser.
 
 Valeur de retour:
 - `true` : L'expression régulière compile correctement.
@@ -544,7 +594,7 @@ bool is_port_match(int rule_port, int capture_port)
 #### <a name="check-interface">void check_interface_validity(char *choosen_interface_name);</a>
 
 Description :
-- Vérifie que l'interface inséré en paramètre est bien présent sur la machine. Dans le cas constraire, le programme se ferme en retournant une erreur.
+- Vérifie que l'interface réseau choisi par l'utilisateur est bien présent sur la machine. Dans le cas contraire, le programme se ferme en retournant une erreur sur la sortir standard d'erreur. Le code de cette fonction est inspiré des examples présents dans la documentation de la librairie `ifaddrs`.
 
 Argument : 
 - `char *choosen_interface_name` : Nom de l'interface à vérifier.
@@ -579,7 +629,7 @@ void check_interface_validity(char *choosen_interface_name)
 #### <a name="check-args">int check_args_validity(int argc, char * argv[]);</a>
 
 Description :
-- Vérifie que les arguments entrés par l'utilisateur lors de l'execution du programme sont valides. Dans le cas contraire, ferme le programme en retournant un message d'erreur sur la sortie standrad d'erreur.
+- Vérifie que les arguments entrés par l'utilisateur lors de l'execution du programme sont valides. Dans le cas contraire, ferme le programme en retournant un message d'erreur sur la sortie standard d'erreur.
 
 Arguments : 
 - `int argc` : Nombre d'arguments.
@@ -631,6 +681,9 @@ Description :
 
 Argument : 
 - `char *device` : Pointeur vers un chaine de caractère contenant le nom de l'interface qui utilisé par pcaplib lors de la capture.
+
+Choix d'implémentation :
+- Cette fonction permet de rendre facultative la sélection d'un interface réseau par l'utilisateur lors du lancement du programme.
 
 ``` C
 void assign_default_interface(char *device)
@@ -684,7 +737,7 @@ Arguments :
 - FILE* : Le fichier déjà ouvert à parcourir.
 
 Valeur de retour :
-- Nombre de ligne dans le fichier de règles.
+- Nombre de lignes dans le fichier de règles.
 
 ``` C
 int count_file_lines(FILE* file)
@@ -709,7 +762,7 @@ int count_file_lines(FILE* file)
 #### <a name="populate-rule-header">int populate_rule_header(char *line, Rule *rule_ds);</a>
 
 Description :
-- Divise une ligne du fichier de règle et remplit les champs d'entête d'une struture Rule avec les valeurs obtenues. La fonction vérifie que ces données sont bien valides avec de peupler la structure.
+- Divise une ligne du fichier de règles et remplit les `champs d'entête` d'une struture Rule avec les valeurs obtenues. La fonction vérifie que ces données sont bien valides avec de peupler la structure.
 
 Arguments : 
 - `char *line` : Ligne du fichier de règles à parcourir.
@@ -770,7 +823,7 @@ int populate_rule_header(char *line, Rule *rule_ds)
 #### <a name="populate-rule-option">int populate_rule_option(char *line, Rule *rule_ds);</a>
 
 Description :
-- Divise une ligne du fichier de règle et remplit les champs d'option d'une struture Rule avec les valeurs obtenues. La fonction vérifie que ces données sont bien valides avec de peupler la structure.
+- Divise une ligne du fichier de règles et remplit les `champs d'option` d'une struture Rule avec les valeurs obtenues. La fonction vérifie que ces données sont bien valides avec de peupler la structure.
 
 Arguments : 
 - `char *line` : Ligne du fichier de règles à parcourir.
@@ -839,7 +892,7 @@ int populate_rule_option(char *line, Rule *rule_ds)
 #### <a name="read-rules">int read_rules(FILE *rules_file, Rule *rules_ds, int count);</a>
 
 Description :
-- Parcours chaques lignes du fichier de régles et appel les fonctions `populate_rule_header()` et `populate_rule_option()` afin de peupler la structure Rule.
+- Parcours chaque ligne du fichier de régles et appel les fonctions `populate_rule_header()` et `populate_rule_option()` afin de peupler la structure Rule.
 
 Arguments : 
 - `FILE *rules_file` : Pointeur vers le fichier de règles déjà ouvert.
@@ -969,7 +1022,8 @@ bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 	if(strcmp(frame->payload_protocol,"udp") == 0 && strcmp(rules_ds->protocol,"udp") == 0)
 	{	
 		ip_match = is_ip_match(rules_ds->ip_src, frame->ip_data.source_ip) && is_ip_match(rules_ds->ip_dst, frame->ip_data.destination_ip);
-		port_match = is_port_match(rules_ds->port_src, frame->ip_data.tcp_data.source_port) && is_port_match(rules_ds->port_dst, frame->ip_data.tcp_data.destination_port);
+		port_match = is_port_match(rules_ds->port_src, frame->ip_data.udp_data.source_port) && is_port_match(rules_ds->port_dst, frame->ip_data.udp_data.destination_port);
+
 		if(ip_match && port_match)
 		{
 			rule_header_match = true;
@@ -1032,7 +1086,7 @@ bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 #### <a name="packet-handler">void my_packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_char *packet);</a>
 
 Description :
-- Fonction de callback systématiquement appelée lors de la capture d'une nouvelle trame par la fonction `pcap_loop`.
+- Fonction de callback systématiquement appelée lors de la capture d'un nouveau packet par la fonction `pcap_loop`.
 
 Arguments : 
 - `u_char *args` : Pointeur vers une structures contenant le pointeur vers le tableau de règles et le nombre de règles.
@@ -1067,9 +1121,9 @@ void my_packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_c
 #### <a name="main">int main(int argc, char *argv[]);</a>
 Description : 
 - Fonction principale qui, dans l'ordre :
-	- Vérifie que les arguments entrés par l'utilisateur sont correctes.
+	- Vérifie que les arguments entrés au démarrage du programme sont correctes.
 	- Assigne l'interface réseau adéquat.
-	- Vérifie l'existance du fichier de règles donné par l'utilisateur et compte le nombre de lignes.
+	- Vérifie l'existance du fichier de règles et compte le nombre de lignes.
 	- Alloue l'espace nécessaire au stockage des pointeurs de règle dans un tableau.
 	- Crée le pcap handler et appel la fonction pcap_loop.
 	- Libération de l'espace assigné au tableau de pointeurs de règle.
