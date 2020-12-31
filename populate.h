@@ -148,6 +148,20 @@ struct custom_ip
 
 } typedef IP_Packet;
 
+struct custom_arp
+{
+    int hw_type;
+    int proto_layer3;
+    int hw_addr_len;
+    int proto_layer3_addr_len;
+    int operation;
+    u_char source_mac[6];
+    u_char source_proto_addr[4];
+    u_char arp_dst[6];
+    u_char arp_dst_proto_addr[4];
+} typedef ARP_Packet;
+
+
 struct custom_ethernet
 {
         char source_mac[ETHER_ADDR_LEN_STR];

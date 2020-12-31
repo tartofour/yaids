@@ -536,7 +536,8 @@ bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 	if(strcmp(frame->payload_protocol,"udp") == 0 && strcmp(rules_ds->protocol,"udp") == 0)
 	{	
 		ip_match = is_ip_match(rules_ds->ip_src, frame->ip_data.source_ip) && is_ip_match(rules_ds->ip_dst, frame->ip_data.destination_ip);
-		port_match = is_port_match(rules_ds->port_src, frame->ip_data.tcp_data.source_port) && is_port_match(rules_ds->port_dst, frame->ip_data.tcp_data.destination_port);
+		port_match = is_port_match(rules_ds->port_src, frame->ip_data.udp_data.source_port) && is_port_match(rules_ds->port_dst, frame->ip_data.udp_data.destination_port);
+
 		if(ip_match && port_match)
 		{
 			rule_header_match = true;
