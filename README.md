@@ -74,7 +74,7 @@
 # Démarrage rapide
 ## <a name="dependances">Dépendances</a>
 
-Afin d'être en mesure de compiler le code source, les paquets `libcap-dev`, `libpcre3-dev` doivent être installés sur la machine hôte. De plus, le packet `git` est nécessaire pour cloner ce dépôt :
+Afin d'être en mesure de compiler le code source, les paquets `libcap-dev`, `libpcre3-dev` doivent être installés sur la machine hôte. De plus, le paquet `git` est nécessaire pour cloner ce dépôt :
 
 ```bash
 # apt update && apt install -y libcap-dev libpcre3-dev git
@@ -93,7 +93,7 @@ $ make
 
 ## <a name="lancement-via-le-fichier-executable">Lancement via le fichier exécutable</a>
 
-Afin d'executer `yaids`, il est indispensable de lui fournir un fichier de règles.  
+Afin d'executer l'IDS, il est indispensable de lui fournir un fichier de règles.  
 Il est également recommandé de spécifier une interface d'écoute :
 
 ```
@@ -102,7 +102,7 @@ Il est également recommandé de spécifier une interface d'écoute :
 
 ## <a name="integration-au-systeme-gnu/linux">Intégration au système GNU/Linux</a>
 
-Pour ajouter automatiquement `yaids` dans le dossier `/usr/local/bin/` et pour l'intégrer à systemd, executez le script d'installation en temps qu'administrateur:
+Pour ajouter automatiquement `yaids` dans le dossier `/usr/local/bin/` et pour l'intégrer à systemd, executez le script d'installation en tant qu'administrateur:
 
 ```
 # ./install.sh
@@ -137,7 +137,7 @@ Permet de définir le protocole sur lequel s'applique la règle. `yaids` prend e
 Yaids prend en charge deux types d'options :
 - `content` qui permet de rechercher une chaine de caractères dans le payload d'un paquet. Cette option est utilisable pour les protocoles `TCP`, `UDP` et `HTTP`.
 - `pcre` qui permet de rechercher une expression régulière dans le payload d'un paquet. Cette option est utilisable pour les protocoles `TCP`, `UDP` et `HTTP`.
-- `msg` qui permet de définir la chaine de caractère à écrire dans le journal du système lors d'un match. Cette option est utilisable pour tous les protocoles.
+- `msg` qui permet de définir la chaine de caractères à écrire dans le journal du système lors d'un match. Cette option est utilisable pour tous les protocoles.
 
 ## <a name="exemple-de-fichier-de-règles">Exemple de fichier de règles </a>
 ``` bash
@@ -599,7 +599,7 @@ bool is_port_match(int rule_port, int capture_port)
 #### <a name="check-interface">void check_interface_validity(char *choosen_interface_name);</a>
 
 Description :
-- Vérifie que l'interface réseau choisi par l'utilisateur est bien présent sur la machine. Dans le cas contraire, le programme se ferme en retournant une erreur sur la sortir standard d'erreur. Le code de cette fonction est inspiré des examples présents dans la documentation de la librairie `ifaddrs`.
+- Vérifie que l'interface réseau choisi par l'utilisateur est bien présent sur la machine. Dans le cas contraire, le programme se ferme en retournant une erreur sur la sortie standard d'erreur. Le code de cette fonction est inspiré des examples présents dans la documentation de la librairie `ifaddrs`.
 
 Argument : 
 - `char *choosen_interface_name` : Nom de l'interface à vérifier.
@@ -634,7 +634,7 @@ void check_interface_validity(char *choosen_interface_name)
 #### <a name="check-args">int check_args_validity(int argc, char * argv[]);</a>
 
 Description :
-- Vérifie que les arguments entrés par l'utilisateur lors de l'execution du programme sont valides. Dans le cas contraire, ferme le programme en retournant un message d'erreur sur la sortie standard d'erreur.
+- Vérifie que les arguments entrés par l'utilisateur lors de l'exécution du programme sont valides. Dans le cas contraire, ferme le programme en retournant un message d'erreur sur la sortie standard d'erreur.
 
 Arguments : 
 - `int argc` : Nombre d'arguments.
@@ -685,10 +685,7 @@ Description :
 - Assigne l'interface réseau par défaut.
 
 Argument : 
-- `char *device` : Pointeur vers un chaine de caractère contenant le nom de l'interface qui utilisé par pcaplib lors de la capture.
-
-Choix d'implémentation :
-- Cette fonction permet de rendre facultative la sélection d'un interface réseau par l'utilisateur lors du lancement du programme.
+- `char *device` : Pointeur vers un chaine de caractère contenant le nom de l'interface qui utilisé par pcaplib lors de la capture. Cette fonction permet de rendre facultative la sélection d'un interface réseau par l'utilisateur lors du lancement du programme.
 
 ``` C
 void assign_default_interface(char *device)
@@ -767,14 +764,14 @@ int count_file_lines(FILE* file)
 #### <a name="populate-rule-header">int populate_rule_header(char *line, Rule *rule_ds);</a>
 
 Description :
-- Divise une ligne du fichier de règles et remplit les `champs d'entête` d'une struture Rule avec les valeurs obtenues. La fonction vérifie que ces données sont bien valides avec de peupler la structure.
+- Divise une ligne du fichier de règles et remplit les `champs d'entête` d'une struture `Rule` avec les valeurs obtenues. La fonction vérifie que ces données sont bien valides avec de garnir la structure.
 
 Arguments : 
 - `char *line` : Ligne du fichier de règles à parcourir.
-- `Rule *rule_ds` : structure Rule à peupler.
+- `Rule *rule_ds` : structure Rule à garnir.
 
 Valeur de retour:
-- 0 si le peuplage de l'entête a réussi.
+- 0 si le "peuplage" de l'entête a réussi.
 - -1 en cas d'erreur.
 
 ``` C
@@ -832,14 +829,14 @@ int populate_rule_header(char *line, Rule *rule_ds)
 #### <a name="populate-rule-option">int populate_rule_option(char *line, Rule *rule_ds);</a>
 
 Description :
-- Divise une ligne du fichier de règles et remplit les `champs d'option` d'une struture Rule avec les valeurs obtenues. La fonction vérifie que ces données sont bien valides avec de peupler la structure.
+- Divise une ligne du fichier de règles et remplit les `champs d'option` d'une struture `Rule` avec les valeurs obtenues. La fonction vérifie que ces données sont bien valides avec de garnir la structure.
 
 Arguments : 
 - `char *line` : Ligne du fichier de règles à parcourir.
-- `Rule *rule_ds` : structure Rule à peupler.
+- `Rule *rule_ds` : structure Rule à garnir.
 
 Valeur de retour:
-- 0 si le peuplage des options a réussi.
+- 0 si le "peuplage" des options a réussi.
 - -1 en cas d'erreur.
 
 ``` C
@@ -904,7 +901,7 @@ int populate_rule_option(char *line, Rule *rule_ds)
 #### <a name="read-rules">int read_rules(FILE *rules_file, Rule *rules_ds, int count);</a>
 
 Description :
-- Parcourt chaque ligne du fichier de régles et appelle les fonctions `populate_rule_header()` et `populate_rule_option()` afin de peupler une structure `Rule`.
+- Parcourt chaque ligne du fichier de régles et appelle les fonctions `populate_rule_header()` et `populate_rule_option()` afin de garnir une structure `Rule`.
 
 Arguments : 
 - `FILE *rules_file` : Pointeur vers le fichier de règles déjà ouvert.
@@ -1092,7 +1089,6 @@ bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 		syslog(LOG_DEBUG, rules_ds->msg);
 		return true;				
 	}
-	
 	return false;
 }
 
@@ -1103,7 +1099,7 @@ bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 #### <a name="packet-handler">void my_packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_char *packet);</a>
 
 Description :
-- Fonction de callback systématiquement appelée lors de la capture d'un nouveau packet par la fonction `pcap_loop`.
+- Fonction de callback systématiquement appelée lors de la capture d'un nouveau paquet par la fonction `pcap_loop`. Cette fonction garnit une structure ETHER_Frame avant de la comparer avec chacune des règles `Rule` présente dans notre tableau de règles.
 
 Arguments : 
 - `u_char *args` : Pointeur vers une structures contenant le pointeur vers le tableau de règles et le nombre de règles.
@@ -1138,12 +1134,12 @@ void my_packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_c
 #### <a name="main">int main(int argc, char *argv[]);</a>
 Description : 
 - Fonction principale qui, dans l'ordre :
-	- Vérifie que les arguments entrés au démarrage du programme sont correctes.
+	- Vérifie que les arguments entrés au démarrage du programme sont corrects.
 	- Assigne l'interface réseau adéquat.
 	- Vérifie l'existance du fichier de règles et compte le nombre de lignes.
-	- Alloue l'espace nécessaire au stockage des pointeurs de règle dans un tableau.
-	- Crée le pcap handler et appel la fonction pcap_loop.
-	- Libération de l'espace assigné au tableau de pointeurs de règle.
+	- Alloue l'espace nécessaire au stockage des règles dans un tableau.
+	- Crée le `pcap_handler` et appelle la fonction `pcap_loop`.
+	- Libération de l'espace assigné au tableau de règles.
 
 ``` C
 int main(int argc, char *argv[])
@@ -1151,15 +1147,17 @@ int main(int argc, char *argv[])
 	FILE *rules_file;
 	Rule *rules;
 	pcap_t * handle;
+	
 	char device[STR_MAX_SIZE];
 	char err_msg[STR_MAX_SIZE];
 	char error_buffer[PCAP_ERRBUF_SIZE];
+
 	int rules_file_lines_count = 0;
 	int error_in_line = -1;
 	
 	check_args_validity(argc, argv);
 	assign_interface(argc, argv, device);
-	printf("Interface sélectionné : %s\n", device);
+	//printf("Interface sélectionné : %s\n", device);
 	
 	rules_file = fopen(argv[1], "r");
 	if(rules_file == NULL)
@@ -1170,7 +1168,7 @@ int main(int argc, char *argv[])
 	
 	rules_file_lines_count = count_file_lines(rules_file);
 	rules = rules_malloc(rules_file_lines_count);
-	printf("Nb de ligne dans le fichier %s : %d\n", argv[1], rules_file_lines_count);
+	//printf("Nb de ligne dans le fichier %s : %d\n", argv[1], rules_file_lines_count);
 
 	error_in_line = read_rules(rules_file, rules, rules_file_lines_count);
 	if (error_in_line != 0)
@@ -1193,7 +1191,6 @@ int main(int argc, char *argv[])
 	free(rules);
 	return EXIT_SUCCESS;
 }
-
 ```
 
 * * *
@@ -1358,7 +1355,7 @@ void print_icmp_header(ICMP_Msg *message)
 #### <a name="populate-packet-ds">int populate_packet_ds(const struct pcap_pkthdr *header, const u_char *packet, ETHER_Frame *custom_frame);</a>
 
 Description :
-- Permet de peupler une structure de type ETHER_Frame en fonction du packet capturé par pcaplib.
+- Permet de garnir une structure de type ETHER_Frame en fonction de la trame capturée par pcaplib. 
 
 Arguments : 
 - `const struct pcap_pkthdr *header` : Pointeur permettant d'accéder aux informations relatives au paquet brute capturé par pcaplib.
@@ -1694,7 +1691,6 @@ struct custom_icmp
 
 ```
 
-
 * * *
 
 #### <a name="custom-udp">struct custom_udp</a>
@@ -1779,8 +1775,8 @@ struct custom_arp
 
 #### <a name="custom-eth">struct custom_ethernet</a>
 Description :
-- Structure personnalisée permettant de stocker une trâme Ethernet dans un format facilement utilisable dans le reste du programme. Elle comprend également le protocole utilisé par le payload applicatif.
-
+- Structure personnalisée permettant de stocker une trâme Ethernet dans un format facilement utilisable dans le reste du programme. Elle comprend également le protocole utilisé par le payload applicatif ou, à défaut, son protocole de couche 4.
+- 
 
 ``` C
 struct custom_ethernet
