@@ -160,7 +160,7 @@ alert icmp any any -> 192.168.56.102 any (msg:"Ping to critical server detected"
 
 ## main.c
 
-#### struct ids_rule
+#### <a name="struct-ids-rule">struct ids_rule</a>
 
 Description :
 
@@ -185,7 +185,7 @@ struct ids_rule
 
 * * *
 
-#### struct pcap_arguments
+#### <a name="struct-pcap-arguments">struct pcap_arguments</a>
 
 Description :
 
@@ -208,7 +208,7 @@ struct pcap_arguments
 
 * * *
 
-#### Rule* rules_malloc(int count);
+#### <a name="rules-malloc">Rule* rules_malloc(int count);</a>
 
 Description :
 
@@ -251,7 +251,7 @@ Rule* rules_malloc(int count)
 
 * * *
 
-#### void print\_help(char * prg\_name);
+#### <a name="print-help">void print_help(char * prg_name);</a>
 
 Description :
 
@@ -286,7 +286,7 @@ void print_help(char * prg_name)
 
 * * *
 
-#### void print\_error(char * err\_str);
+#### <a name="print-error">void print_error(char * err_str);</a>
 
 Description :
 
@@ -309,7 +309,7 @@ void print_error(char * err_str)
 
 * * *
 
-#### void print_rules(Rule *rules, int count);
+#### <a name="print-rules"> void print_rules(Rule *rules, int count);</a>
 
 Description :
 
@@ -349,7 +349,7 @@ void print_rules(Rule *rules, int count)
 
 * * *
 
-#### void remove\_char\_from\_str(char \*new\_str, char \*str, char char\_to\_remove);
+#### <a name="remove-char"> void remove_char_from_str(char *new_str, char *str, char char_to_remove);</a>
 
 Description :
 
@@ -386,7 +386,7 @@ void remove_char_from_str(char *new_str, char *str, char char_to_remove)
 
 * * *
 
-#### bool is\_action\_in\_rule\_valid(char *action);
+#### <a name="is-action">bool is_action_in_rule_valid(char *action);</a>
 
 Description :
 
@@ -414,7 +414,7 @@ bool is_action_in_rules_valid(char *action_str)
 
 * * *
 
-#### bool is\_protocol\_in\_rules\_valid(char *protocol);
+#### <a name="is-proto">bool is_protocol_in_rules_valid(char *protocol);</a>
 
 Description :
 
@@ -446,7 +446,7 @@ bool is_protocol_in_rules_valid(char *protocol)
 
 * * *
 
-#### bool is\_ip\_in\_rules\_valid(char *ip);
+#### <a name="is-ip-in-rules">bool is_ip_in_rules_valid(char *ip);</a>
 
 Description :
 
@@ -505,7 +505,7 @@ bool is_ip_in_rules_valid(char *ip)
 
 * * *
 
-#### bool is\_port\_in\_rules\_valid(char *port);
+#### <a name="is-port-in-rules">bool is_port_in_rules_valid(char *port);</a>
 
 Description :
 
@@ -532,8 +532,7 @@ bool is_port_in_rules_valid(char *port)
 
 * * *
 
-#### bool is\_direction\_in\_rules\_valid(char *direction);
-
+#### <a name="is-direction-in-rules-valid">bool is_direction_in_rules_valid(char *direction);</a>
 Description :
 
 - Vérifie la validité de la valeur présente dans le champ `direction` d'une ligne extraite du fichier de règle.
@@ -559,7 +558,7 @@ bool is_direction_in_rules_valid(char *direction)
 
 * * *
 
-#### bool is\_pcre\_in\_rules\_valid(char *regex);
+#### <a name="is-pcre-in-rules-valid">bool is_pcre_in_rules_valid(char *regex);</a>
 
 Description :
 
@@ -594,7 +593,7 @@ bool is_pcre_in_rules_valid(char *regex)
 
 * * *
 
-#### bool is\_ip\_match(char* rules\_ip, char* captured\_ip);
+#### <a name="is-ip-match">bool is_ip_match(char* rules_ip, char* captured_ip);</a>
 
 Description :
 
@@ -623,7 +622,7 @@ bool is_ip_match(char* rules_ip, char* captured_ip)
 
 * * *
 
-#### bool is\_port\_match(int rule\_port, int capture\_port);
+#### <a name="is-port-match">bool is_port_match(int rule_port, int capture_port);</a>
 
 Description :
 
@@ -652,7 +651,7 @@ bool is_port_match(int rule_port, int capture_port)
 
 * * *
 
-#### void check\_interface\_validity(char *choosen\_interface\_name);
+#### <a name="check-interface">void check_interface_validity(char *choosen_interface_name);</a>
 
 Description :
 
@@ -689,7 +688,7 @@ void check_interface_validity(char *choosen_interface_name)
 
 * * *
 
-#### int check\_args\_validity(int argc, char * argv\[\]);
+#### <a name="check-args">int check_args_validity(int argc, char * argv[]);</a>
 
 Description :
 
@@ -739,7 +738,7 @@ void check_args_validity(int argc, char * argv[])
 
 * * *
 
-#### void assign\_default\_interface(char *device);
+#### <a name="assign-default-int">void assign_default_interface(char *device);</a>
 
 Description :
 
@@ -766,7 +765,7 @@ void assign_default_interface(char *device)
 
 * * *
 
-#### void assign_interface(int argc, char \*argv\[\], char \*device);
+#### <a name="assign-int">void assign_interface(int argc, char *argv[], char *device);</a>
 
 Description :
 
@@ -795,7 +794,7 @@ void assign_interface(int argc, char *argv[], char *device)
 
 * * *
 
-#### int count\_file\_lines(FILE* file);
+#### <a name="count-file-lines">int count_file_lines(FILE* file);</a>
 
 Description :
 
@@ -830,7 +829,7 @@ int count_file_lines(FILE* file)
 
 * * *
 
-#### int populate\_rule\_header(char \*line, Rule \*rule_ds);
+#### <a name="populate-rule-header">int populate_rule_header(char *line, Rule *rule_ds);</a>
 
 Description :
 
@@ -898,7 +897,7 @@ int populate_rule_header(char *line, Rule *rule_ds)
 
 * * *
 
-#### int populate\_rule\_option(char \*line, Rule \*rule_ds);
+#### <a name="populate-rule-option">int populate_rule_option(char *line, Rule *rule_ds);</a>
 
 Description :
 
@@ -973,7 +972,7 @@ int populate_rule_option(char *line, Rule *rule_ds)
 
 * * *
 
-#### int read\_rules(FILE \*rules\_file, Rule \*rules_ds, int count);
+#### <a name="read-rules">int read_rules(FILE *rules_file, Rule *rules_ds, int count);</a>
 
 Description :
 
@@ -1027,7 +1026,7 @@ int read_rules(FILE *rules_file, Rule *rules_ds, int count)
 
 * * *
 
-#### bool rules\_matcher(Rule \*rules\_ds, ETHER_Frame \*frame);
+#### <a name="rules-matcher">bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame);</a>
 
 Description :
 
@@ -1178,7 +1177,7 @@ bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
 
 * * *
 
-#### void my\_packet\_handler(u\_char \*args, const struct pcap\_pkthdr \*header, const u_char *packet);
+#### <a name="packet-handler">void my_packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_char *packet);</a>
 
 Description :
 
@@ -1215,7 +1214,7 @@ void my_packet_handler(u_char *args, const struct pcap_pkthdr *header, const u_c
 
 * * *
 
-#### int main(int argc, char *argv\[\]);
+#### <a name="main">int main(int argc, char *argv[]);</a>
 
 Description :
 
@@ -1283,7 +1282,7 @@ int main(int argc, char *argv[])
 
 ## populate.c
 
-#### void generate\_ip(unsigned int ip, char ip\_addr\[\]);
+#### <a name="generate-ip">void generate_ip(unsigned int ip, char ip_addr[]);</a>
 
 Description :
 
@@ -1309,8 +1308,7 @@ void generate_ip(unsigned int ip, char ip_addr[])
 
 * * *
 
-#### void print\_payload(int payload\_length, unsigned char *payload);
-
+#### <a name="print-payload">void print_payload(int payload_length, unsigned char *payload);</a>
 Description :
 
 - Affiche le contenu du payload d'un packet.
@@ -1339,7 +1337,7 @@ void print_payload(int payload_length, unsigned char *payload)
 
 * * *
 
-#### void print\_ethernet\_header(ETHER_Frame *frame);
+#### <a name="print-ethernet-header">void print_ethernet_header(ETHER_Frame *frame);</a>
 
 Description :
 
@@ -1361,7 +1359,7 @@ void print_ethernet_header(ETHER_Frame *frame)
 
 * * *
 
-#### void print\_ip\_header(IP_Packet *packet);
+#### <a name="print-ip-header">void print_ip_header(IP_Packet *packet);</a>
 
 Description :
 
@@ -1383,7 +1381,7 @@ void print_ip_header(IP_Packet *packet)
 
 * * *
 
-#### void print\_tcp\_header(TCP_Segment *segment);
+#### <a name="print-tcp-header">void print_tcp_header(TCP_Segment *segment);</a>
 
 Description :
 
@@ -1408,7 +1406,7 @@ void print_tcp_header(TCP_Segment *segment)
 
 * * *
 
-#### void print\_udp\_header(UDP_Datagram *datagram);
+#### <a name="print-udp-header">void print_udp_header(UDP_Datagram *datagram);</a>
 
 Description :
 
@@ -1430,7 +1428,7 @@ void print_udp_header(UDP_Datagram *datagram)
 
 * * *
 
-#### void print\_icmp\_header(ICMP_Msg *message);
+#### <a name="print-icmp-header">void print_icmp_header(ICMP_Msg *message);</a>
 
 Description :
 
@@ -1453,8 +1451,7 @@ void print_icmp_header(ICMP_Msg *message)
 
 * * *
 
-#### int populate\_packet\_ds(const struct pcap\_pkthdr \*header, const u\_char \*packet, ETHER\_Frame *custom\_frame);
-
+#### <a name="populate-packet-ds">int populate_packet_ds(const struct pcap_pkthdr *header, const u_char *packet, ETHER_Frame *custom_frame);</a>
 Description :
 
 - Permet de garnir une structure de type ETHER_Frame en fonction de la trame capturée par pcaplib.
@@ -1642,7 +1639,7 @@ int populate_packet_ds(const struct pcap_pkthdr *header, const u_char *packet, E
 
 * * *
 
-#### struct sniff_ethernet
+#### <a name="sniff-eth">struct sniff_ethernet</a>
 
 Description :
 
@@ -1660,7 +1657,7 @@ struct sniff_ethernet
 
 * * *
 
-#### struct sniff_arp
+#### <a name="sniff-arp">struct sniff_arp</a>
 
 Description :
 
@@ -1683,7 +1680,7 @@ struct sniff_arp {
 
 * * *
 
-#### struct sniff_ip
+#### <a name="sniff-ip">struct sniff_ip</a>
 
 Description :
 
@@ -1711,7 +1708,7 @@ struct sniff_ip
 
 * * *
 
-#### struct sniff_icmp
+#### <a name="sniff-icmp">struct sniff_icmp</a>
 
 Description :
 
@@ -1733,7 +1730,7 @@ struct sniff_icmp
 
 * * *
 
-#### struct sniff_udp
+#### <a name="sniff-udp">struct sniff_udp</a>
 
 Description :
 
@@ -1751,7 +1748,7 @@ struct sniff_udp {
 
 * * *
 
-#### struct sniff_tcp
+#### <a name="sniff-tcp">struct sniff_tcp</a>
 
 Description :
 
@@ -1787,7 +1784,7 @@ struct sniff_tcp {
 
 * * *
 
-#### struct custom_icmp
+#### <a name="custom-icmp">struct custom_icmp</a>
 
 Description :
 
@@ -1807,7 +1804,7 @@ struct custom_icmp
 
 * * *
 
-#### struct custom_udp
+#### <a name="custom-udp">struct custom_udp</a>
 
 Description :
 
@@ -1827,7 +1824,7 @@ struct custom_udp
 
 * * *
 
-#### struct custom_tcp
+#### <a name="custom-tcp">struct custom_tcp</a>
 
 Description :
 
@@ -1847,7 +1844,7 @@ struct custom_tcp
 
 * * *
 
-#### struct custom_ip
+#### <a name="custom-ip">struct custom_ip</a>
 
 Description :
 
@@ -1869,7 +1866,7 @@ struct custom_ip
 
 * * *
 
-#### struct custom_arp
+#### <a name="custom-arp">struct custom_arp</a>
 
 Description :
 
@@ -1894,7 +1891,7 @@ struct custom_arp
 
 * * *
 
-#### struct custom_ethernet
+#### <a name="custom-arp">struct custom_arp</a>
 
 Description :
 
