@@ -74,7 +74,7 @@
 # Démarrage rapide
 ## Dépendances
 
-Afin d'être en mesure de compiler le code source, les packets `libcap-dev`, `libpcre3-dev` doivent être installé sur la machine hôte. De plus, le packet `git` est nécessaire pour cloner ce dépôt :
+Afin d'être en mesure de compiler le code source, les paquets `libcap-dev`, `libpcre3-dev` doivent être installés sur la machine hôte. De plus, le packet `git` est nécessaire pour cloner ce dépôt :
 
 ```bash
 # apt update && apt install -y libcap-dev libpcre3-dev git
@@ -107,12 +107,12 @@ Pour ajouter automatiquement `yaids` dans le dossier `/usr/local/bin/` et pour l
 ```
 # ./install.sh
 ```
-Vous pouvez désormais vérifier que le service est bien en marche :
+Une fois l'installation terminée, vous pouvez vérifier que le service `yaids` est bien en marche :
 
 ```
 # systemctl status yaids.service
 ```
-Il est possible de modifier les règles utilisées par yaids via le fichier `/etc/rules.txt`. Il est nécessaire de redémarrer le service `yaids` à chaque modification de ce fichier.
+Il est possible de modifier les règles utilisées par l'IDS via le fichier `/etc/rules.txt`. Il est nécessaire de redémarrer le service `yaids` à chaque modification de ce fichier.
 
 ## Désinstallation
 
@@ -133,8 +133,8 @@ Permet de définir le protocole sur lequel s'applique la règle. `yaids` prend e
 - `SSH`
 
 ## Options de règles
-Yaids prend en charge deux type d'options :
-- `content` qui permet de rechercher une chaine de caractère dans le payload d'un paquet. Cette option est utilisable pour les protocoles `TCP`, `UDP` et `HTTP`.
+Yaids prend en charge deux types d'options :
+- `content` qui permet de rechercher une chaine de caractères dans le payload d'un paquet. Cette option est utilisable pour les protocoles `TCP`, `UDP` et `HTTP`.
 - `pcre` qui permet de rechercher une expression régulière dans le payload d'un paquet. Cette option est utilisable pour les protocoles `TCP`, `UDP` et `HTTP`.
 - `msg` qui permet de définir la chaine de caractère à écrire dans le journal du système lors d'un match. Cette option est utilisable pour tous les protocoles.
 
@@ -154,7 +154,7 @@ alert icmp any any -> 192.168.56.102 any (msg:"Ping to critical server detected"
 
 #### <a name="struct-ids-rule">struct ids_rule</a>
 Description : 
-- Cette structure permet de stocker une règle qui sera par la suite comparé aux paquets capturés par libpcap.
+- Cette structure permet de stocker une règle qui sera par la suite comparée aux paquets capturés par libpcap.
 
 ``` C
 struct ids_rule
@@ -202,7 +202,7 @@ Description :
 - Réserve l'espace mémoire nécessaire au stockage des différentes structures `Rule` dans un tableau. La fonction initialise également les structures créées.
 
 Argument : 
-- `int count` : Nombre de structure Rules à créer.
+- `int count` : Nombre de structures Rules à créer.
 
 Valeur de retour : 
 - `Rule*` : Pointeur vers le début d'un tableau d'une ou plusieurs `Rule`.
@@ -422,6 +422,9 @@ Argument :
 Valeur de retour : 
 - `true` ou `false`
 
+Choix d'implémentation :
+- Pour cette fonction, nous avons utilisé une boucle qui parcourt chacun des champs de l'ip fournie en paramètre. Nous vérifions ainsi la validité de chaque octet de l'ip. De plus, la fonction vérifie que l'adresse ip est bien de constituée de 4 octets.
+
 ``` C
 bool is_ip_in_rules_valid(char *ip)
 {
@@ -511,7 +514,7 @@ bool is_direction_in_rules_valid(char *direction)
 #### <a name="is-pcre-in-rules-valid">bool is_pcre_in_rules_valid(char *regex);</a>
 
 Description :
-- Vérifie la validité de l'expression régulière présente dans le champ `pcre` d'une ligne extraite du fichier de règle. La fonction va tenter de compiler l'expression régulière pour déterminer si cette dernière est valide ou non.
+- Vérifie la validité de l'expression régulière présente dans le champ `pcre` d'une ligne extraite du fichier de règles. La fonction va tenter de compiler l'expression régulière pour déterminer si cette dernière est valide ou non.
 
 Argument : 
 - `char *regex` : Chaine de caractère à analyser.
@@ -543,15 +546,15 @@ bool is_pcre_in_rules_valid(char *regex)
 #### <a name="is-ip-match">bool is_ip_match(char* rules_ip, char* captured_ip);</a>
 
 Description :
-- Compare une ip contenue dans une structure règle avec l'ip fournie en paramètre. 
+- Permet de comparer deux IP.
 
 Argument : 
 - `char *rules_ip` : IP source ou destination stockée dans une structure règle.
 - `char *captured_ip` : IP à comparer.
 
 Valeur de retour:
-- `true` ou `false` 
-
+- `true` si les ip correspondent.
+- `false` si les ip ne correspondent pas.
 
 ``` C
 bool is_ip_match(char* rules_ip, char* captured_ip)
@@ -569,14 +572,15 @@ bool is_ip_match(char* rules_ip, char* captured_ip)
 #### <a name="is-port-match">bool is_port_match(int rule_port, int capture_port);</a>
 
 Description :
-- Compare un port contenu dans une structure règle avec le port fourni en paramètre. Retourne vrai si les ports correspondent. 
+- Permet de comparer un port venant d'une structure règle avec un port venant d'une structure eternet_custom. Retourne vrai si les ports correspondent. 
 
 Argument : 
 - `char *rules_port` : Port source ou destination stocké dans une structure règle.
 - `int captured_port` : Port à comparer.
 
 Valeur de retour:
-- `true` ou `false` 
+- `true` si les ports correspondent.
+- `false` si les ports ne correspondent pas.
 
 ``` C
 bool is_port_match(int rule_port, int capture_port)
@@ -731,7 +735,7 @@ void assign_interface(int argc, char *argv[], char *device)
 #### <a name="count-file-lines">int count_file_lines(FILE* file);</a>
 
 Description :
-- Parcours un fichier et compte le nombre de lignes qui y sont présentes. 
+- Parcourt un fichier et compte le nombre de lignes qui y sont présentes. 
 
 Arguments : 
 - FILE* : Le fichier déjà ouvert à parcourir.
@@ -767,6 +771,10 @@ Description :
 Arguments : 
 - `char *line` : Ligne du fichier de règles à parcourir.
 - `Rule *rule_ds` : structure Rule à peupler.
+
+Valeur de retour:
+- 0 si le peuplage de l'entête a réussi.
+- -1 en cas d'erreur.
 
 ``` C
 int populate_rule_header(char *line, Rule *rule_ds)
@@ -829,6 +837,10 @@ Arguments :
 - `char *line` : Ligne du fichier de règles à parcourir.
 - `Rule *rule_ds` : structure Rule à peupler.
 
+Valeur de retour:
+- 0 si le peuplage des options a réussi.
+- -1 en cas d'erreur.
+
 ``` C
 int populate_rule_option(char *line, Rule *rule_ds)
 {
@@ -866,7 +878,6 @@ int populate_rule_option(char *line, Rule *rule_ds)
 				return -1;
 			}
 			strcpy(rule_ds->content, value_buffer);
-			
 		}
 		else if (strcmp(option_buffer, "pcre") == 0)
 		{
@@ -892,7 +903,7 @@ int populate_rule_option(char *line, Rule *rule_ds)
 #### <a name="read-rules">int read_rules(FILE *rules_file, Rule *rules_ds, int count);</a>
 
 Description :
-- Parcours chaque ligne du fichier de régles et appel les fonctions `populate_rule_header()` et `populate_rule_option()` afin de peupler la structure Rule.
+- Parcourt chaque ligne du fichier de régles et appelle les fonctions `populate_rule_header()` et `populate_rule_option()` afin de peupler une structure `Rule`.
 
 Arguments : 
 - `FILE *rules_file` : Pointeur vers le fichier de règles déjà ouvert.
@@ -900,7 +911,7 @@ Arguments :
 - `int count` : Nombre de ligne présentes dans le fichier de règles. 
 
 Valeur de retour : 
-- `0` si la processus de "peuplage" se déroule sans erreur.
+- `0` si le "peuplage" se déroule sans erreur.
 - `line_nb+1` en cas d'erreur. Cette valeur représente le numéro de la ligne où l'erreur a été détectée dans un format "human readable" (on commence à compter par 1).
 
 ``` C
@@ -952,6 +963,11 @@ Arguments :
 Valeur de retour : 
 - `true` : La règle et les informations contenue dans la trame correspondent (match)
 - `false` : La règle et les informations contenue dans la trame ne correspondent pas (no match)
+
+Choix d'implémentation : 
+- Dans un premier temps, cette fonction vérifie la correspondance entre les champs d'entête d'une règle `Rule` et les informations contenues dans une trame `ETHER_Frame`.
+- S'il y a correspondance, elle compare la trame `ETHER_Frame` avec les champs d'option de la règle. 
+- En fonction de ces options, un message Syslog est généré ou non.
 
 ``` C
 bool rules_matcher(Rule *rules_ds, ETHER_Frame *frame)
