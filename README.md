@@ -10,11 +10,11 @@
 ## Table des Matières
 
 - Démarrage rapide
-    - [Dépendances](#d%C3%A9pendances)
+    - [Dépendances](#dependances)
     - [Installation](#installation)
-    - [Lancement via le fichier exécutable](#lancement-via-le-fichier-exécutable)
+    - [Lancement via le fichier exécutable](#lancement-via-le-fichier-executable)
 	- [Intégration au système GNU/Linux](#integration-au-systeme-gnu/linux)
-	- [Désinstallation](#désinstallation)
+	- [Désinstallation](#desinstallation)
     - [Protocoles pris en charge](#protocoles-pris-en-charge)
     - [Options de règles](#options-de-règles)
     - [Exemple de fichier de règles](#exemple-de-fichier-de-règles)
@@ -72,7 +72,7 @@
 		- [struct custom_ethernet](#custom-eth)
 
 # Démarrage rapide
-## Dépendances
+## <a name="dependances">Dépendances</a>
 
 Afin d'être en mesure de compiler le code source, les paquets `libcap-dev`, `libpcre3-dev` doivent être installés sur la machine hôte. De plus, le packet `git` est nécessaire pour cloner ce dépôt :
 
@@ -80,7 +80,7 @@ Afin d'être en mesure de compiler le code source, les paquets `libcap-dev`, `li
 # apt update && apt install -y libcap-dev libpcre3-dev git
 ```
 
-## Installation
+## <a name="installation">Installation</a>
 
 La façon la plus facile d'installer yaids est de cloner ce dépôt et de compiler le code source à l'aide du fichier Makefile.  
 Pour ce faire, exécutez les commandes suivantes depuis le terminal:
@@ -91,7 +91,7 @@ $ cd yaids
 $ make
 ```
 
-## Lancement via le fichier exécutable
+## <a name="lancement-via-le-fichier-executable">Lancement via le fichier exécutable</a>
 
 Afin d'executer `yaids`, il est indispensable de lui fournir un fichier de règles.  
 Il est également recommandé de spécifier une interface d'écoute :
@@ -114,7 +114,7 @@ Une fois l'installation terminée, vous pouvez vérifier que le service `yaids` 
 ```
 Il est possible de modifier les règles utilisées par l'IDS via le fichier `/etc/rules.txt`. Il est nécessaire de redémarrer le service `yaids` à chaque modification de ce fichier.
 
-## Désinstallation
+## <a name="desinstallation">Désinstallation</a>
 
 Pour désinstaller yaids, executez le script de désinstallation en temps qu'administrateur:
 
@@ -122,7 +122,7 @@ Pour désinstaller yaids, executez le script de désinstallation en temps qu'adm
 # ./uninstall.sh
 ```
 
-## Protocoles pris en charge
+## <a name="protocoles-pris-en-charge">Protocoles pris en charge</a>
 
 Permet de définir le protocole sur lequel s'applique la règle. `yaids` prend en charge les protocoles suivants:
 - `TCP`
@@ -132,13 +132,14 @@ Permet de définir le protocole sur lequel s'applique la règle. `yaids` prend e
 - `FTP`
 - `SSH`
 
-## Options de règles
+##  <a name="options-de-regles">Options de règles</a>
+
 Yaids prend en charge deux types d'options :
 - `content` qui permet de rechercher une chaine de caractères dans le payload d'un paquet. Cette option est utilisable pour les protocoles `TCP`, `UDP` et `HTTP`.
 - `pcre` qui permet de rechercher une expression régulière dans le payload d'un paquet. Cette option est utilisable pour les protocoles `TCP`, `UDP` et `HTTP`.
 - `msg` qui permet de définir la chaine de caractère à écrire dans le journal du système lors d'un match. Cette option est utilisable pour tous les protocoles.
 
-## Exemple de fichier de règles
+## <a name="exemple-de-fichier-de-règles">Exemple de fichier de règles </a>
 ``` bash
 alert udp any any -> any 9999 (msg:"UDP traffic bind port is forbidden";)
 alert http 192.168.56.102 any -> any any (msg:"XSS Attack detected"; pcre:"<script>alert.'[a-zA-Z]*'.<\/script>";)
