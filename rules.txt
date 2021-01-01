@@ -4,4 +4,4 @@ alert http 192.168.56.102 any -> any any (msg:"Default page detected"; content:"
 alert ssh 192.168.56.102 any -> any any (msg:"SSH connexion to critical server detected";)
 alert ftp any any -> any any (msg:"Unsecure protocol use detected";)
 alert tcp any any -> any 8888 (msg:"Backdoor attack";)
-alert icmp any any -> 192.168.56.102 any (msg:"Ping to critical server detected";)
+alert icmp any any -> 192.168.56.102 any (msg:"Ping attempt to critical server detected";)
