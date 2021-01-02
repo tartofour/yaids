@@ -15,7 +15,7 @@
     - [Intégration au système GNU/Linux](#integration-au-systeme-gnu/linux)
     - [Désinstallation](#desinstallation)
     - [Protocoles pris en charge](#protocoles-pris-en-charge)
-    - [Options de règles](#options-de-r%C3%A8gles)
+    - [Options de règles](#options-de-regles)
     - [Exemple de fichier de règles](#exemple-de-fichier-de-r%C3%A8gles)
 - Documentation du code source
     - **main.c**
@@ -119,24 +119,26 @@ Il est possible de modifier les règles utilisées par l'IDS via le fichier `/et
 
 ## <a name="desinstallation">Désinstallation</a>
 
-Pour désinstaller yaids, executez le script de désinstallation en tant qu'administrateur:
+Pour désinstaller yaids, executez le script de désinstallation en tant qu'administrateur :
 
 ```
 # ./uninstall.sh
 ```
 
-## <a name="desinstallation">Désinstallation</a>
+## <a name="protocoles-pris-en-charge">Protocoles pris en charge</a>
 
-Permet de définir le protocole sur lequel s'applique la règle. `yaids` prend en charge les protocoles suivants:
+Voici un tableau reprennant les protocoles utilisables dans un fichier de règles et les méthodes utilisées pour détecter ces protocoles lors de la capture d'un paquet :
 
-- `TCP`
-- `UDP`
-- `ICMP`
-- `HTTP`
-- `FTP`
-- `SSH`
+| Protocole | Méthode de détection |
+| --- | --- |
+| TCP | Via le champ "protocole" présent dans l'entête du paquet IP capturé. |
+| UDP | Via le champ "protocole" présent dans l'entête du paquet IP capturé. |
+| ICMP | Via le champ "protocole" présent dans l'entête du paquet IP capturé. |
+| HTTP | Via la recherche d'une signature particulière dans le payload applicatif du paquet capturé. |
+| FTP | Via la recherche d'une signature particulière dans le payload applicatif du paquet capturé. |
+| SSH | Via la recherche d'une signature particulière dans le payload applicatif du paquet capturé. |
 
-## <a name="desinstallation">Désinstallation</a>
+## <a name="options-de-regles">Options de règles</a>
 
 Yaids prend en charge deux types d'options :
 
