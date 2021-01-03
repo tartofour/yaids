@@ -89,7 +89,7 @@ Pour ce faire, exécutez les commandes suivantes depuis le terminal:
 ```
 $ git clone https://github.com/tartofour/yaids.git
 $ cd yaids
-$ sudo make -B
+$ make
 ```
 
 ## <a name="lancement-via-le-fichier-executable">Lancement via le fichier exécutable</a>
@@ -115,7 +115,7 @@ Une fois l'installation terminée, vous pouvez vérifier que le service `yaids` 
 # systemctl status yaids.service
 ```
 
-Il est possible de modifier les règles utilisées par l'IDS via le fichier `/etc/rules.txt`. Il est nécessaire de redémarrer le service `yaids` à chaque modification de ce fichier.
+Il est possible de modifier les règles utilisées par l'IDS via le fichier `/etc/yaids/rules.txt`. Il est nécessaire de redémarrer le service `yaids` à chaque modification de ce fichier.
 
 ## <a name="desinstallation">Désinstallation</a>
 
